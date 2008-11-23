@@ -1,5 +1,3 @@
 #summary The back story of why this project was started
 
-= The Back Story =
-
 See [http://www.boards.ie/vbulletin/showthread.php?t=2055391868 this thread] on [http://www.boards.ie www.boards.ie].
