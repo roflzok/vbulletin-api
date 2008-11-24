@@ -66,7 +66,7 @@ extends Action
 	 *					the return and the value is a string describing it 
 	 *					further.
 	 */
-	protected function returnSpec() {
+	public function returnSpec() {
 		return array(
 			"Post" => "A structure describing the post"
 		);
@@ -76,7 +76,7 @@ extends Action
 	 *
 	 *	@return	string	A description of what the action does.
 	 */
-	protected function getDescription() {
+	public function getDescription() {
 		return "Fetch the contents and meta-data for a post.";
 	}
 

@@ -78,7 +78,7 @@ extends Action
 	 *					the return and the value is a string describing it 
 	 *					further.
 	 */
-	protected function returnSpec() {
+	public function returnSpec() {
 		return array(
 			"Thread" => "A structure containing all or part of a thread"
 		);
@@ -88,7 +88,7 @@ extends Action
 	 *
 	 *	@return	string	A description of what the action does.
 	 */
-	protected function getDescription() {
+	public function getDescription() {
 		return "Fetch the posts and meta-data for a thread";
 	}
 

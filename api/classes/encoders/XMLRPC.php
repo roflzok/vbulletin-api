@@ -86,10 +86,6 @@ extends Encoder
 		foreach ($xml_data->params->param as $param) {
 			$params[] = $this->decodeValue($param->value);
 		}
-		if (count($params) != 1 || !is_array($params[0])) {
-			throw new Exception("Only one parameter may be passed and that must be an associative array");
-		}
-		$params = $params[0];
 
 		return array(
 			'action' => $action_name,
@@ -255,7 +251,8 @@ extends Encoder
 		$xml = new SimpleXMLElement("<methodResponse />");
 		$params = $xml->addChild("params");
 		$param = $params->addChild("param");
-		$this->encodeValue($param, $raw_data);
+		$value = $param->addChild("value");
+		$this->encodeValue($value, $raw_data);
 		return $xml->asXML();
 	}
 
@@ -379,6 +376,116 @@ extends Encoder
 XML;
 	}
 
+	/**	Handle the system.* methods for XML-RPC.
+	 *
+	 *	@param	array $request	A structure that came out of {@link decode()}.
+	 *	@return					A structure that can be passed to {@link 
+	 *							encode()}.
+	 */
+	public function execute($request) {
+		if ($request['action'] == "system.listMethods") {
+			return $this->executeListMethods();
+		} else if ($request['action'] == "system.methodSignature") {
+			if (count($request['params']) == 1) {
+				return $this->executeMethodSignature($request['params'][0]);
+			} else {
+				throw new Exception("Bad parameters for system.methodSignature");
+			}
+		} else if ($request['action'] == "system.methodHelp") {
+			if (count($request['params']) == 1) {
+				return $this->executeMethodHelp($request['params'][0]);
+			} else {
+				throw new Exception("Bad parameters for system.methodHelp");
+			}
+		} else {
+			parent::execute($request);
+		}
+	}
+
+	/** Implement the system.listMethods method. Lists all the methods 
+	 *	available to the end-user.
+	 *
+	 *	@return	array	An array of strings which are method names.
+	 */
+	private function executeListMethods() {
+		$actions = Actions::getAllActions();
+		$action_names = array(
+			"system.listMethods",
+			"system.methodSignature",
+			"system.methodHelp"
+		);
+		foreach ($actions as $action) {
+			$action_names[] = $action->getName();
+		}
+		sort($action_names);
+		reset($action_names);
+		return $action_names;
+	}
+
+	/** Implement the system.methodSignature method. Lists all the available 
+	 *	signatures for a method.
+	 *
+	 *	@param	string $method_name	The name of the method to query for.
+	 *	@return	array				An array of method signatures for the given 
+	 *								method. Each element of that array is an 
+	 *								array where the first element is the return 
+	 *								type and the remainder of the elements are 
+	 *								the parameters to the method.
+	 */
+	private function executeMethodSignature($method_name) {
+		switch ($method_name) {
+			case "system.listMethods":
+				return array(array("array"));
+			case "system.methodSignature":
+				return array(array("array", "string"));
+			case "system.methodHelp":
+				return array(array("array", "string"));
+			default: 
+				$action = Actions::getAction($method_name);
+				$return_type = array_shift(array_keys($action->returnSpec()));
+				return array(array($this->phpTypeToXMLRPCType($return_type), "struct"));
+		}
+	}
+
+	/** Implement the system.methodHelp method. This gives a short description 
+	 *	of what each method does.
+	 *
+	 *	@param	string $method_name	The name of the method to query for.
+	 *	@return	string				A string containing a description of the 
+	 *								method.
+	 */
+	private function executeMethodHelp($method_name) {
+		switch ($method_name) {
+			case "system.listMethods":
+			case "system.methodSignature":
+			case "system.methodHelp":
+				return "System method, see http://xmlrpc-c.sourceforge.net/introspection.html for details.";
+			default: 
+				$action = Actions::getAction($method_name);
+				return $action->getDescription();
+		}
+	}
+
+	/**	Given the name of a PHP type, return the XML-RPC equivalent.
+	 *
+	 *	@param	string $type_name	The name of the PHP type.
+	 *	@return	string				The name of the corresponding XML-RPC type.
+	 */
+	private function phpTypeToXMLRPCType($type_name) {
+		switch ($type_name) {
+			case "boolean":
+			case "double":
+			case "string":
+				return $type_name;
+			case "integer":
+				return "int";
+			case "array":
+				return "array";
+			default: // Object types
+				return "struct";
+		}
+	}
+
 	/** Get the MIME types most likely to be used with XML-RPC.
 	 *
 	 *	The first of these is text/xml which is the correct MIME type according 
@@ -397,10 +504,12 @@ XML;
 	public function getDescription() {
 		return <<<DESC
 Encodes/decodes XML-RPC messages. See the <a 
-href=\"http://www.xmlrpc.com/spec\">XML-RPC spec</a>
-for details. One extension to the spec, the <a 
-href=\"http://ontosys.com/xml-rpc/extensions.php\">&lt;nil /&gt; extension</a>, 
-is accepted.
+href="http://www.xmlrpc.com/spec">XML-RPC spec</a>
+for details. Two extensions to the spec, the <a 
+href="http://ontosys.com/xml-rpc/extensions.php">&lt;nil /&gt; extension</a> 
+and the <a 
+href="http://xmlrpc-c.sourceforge.net/introspection.html">introspection 
+extension</a> are implemented.
 DESC;
 	}
 }

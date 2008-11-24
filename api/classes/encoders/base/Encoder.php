@@ -72,6 +72,21 @@ abstract class Encoder {
 	 */
 	public abstract function decode($encoded_data);
 
+	/** If the encoder wishes to handle a request itself rather than passing it 
+	 * on to an action then it can elect to handle it here. An regular {@link 
+	 * Action} is searched for first, so this method can only handle actions 
+	 * which are not defined.
+	 *
+	 *	@param	array $request	A structure in the same form as is returned by 
+	 *							{@link decode()}.
+	 *	@return mixed			Some form of structure which can be passed to 
+	 *							{@link encode()} before being sent to the 
+	 *							client.
+	 */
+	public function execute($request) {
+		throw new Exception("No such action '" . $request['action'] . "'");
+	}
+
 	/** Decide whether this encoder can be used to decode a message.
 	 *
 	 *	@param	string $content_type	The HTTP Content-Type header which was 

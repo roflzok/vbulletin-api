@@ -63,13 +63,13 @@ abstract class Action
 	 *					the return and the value is a string describing it 
 	 *					further.
 	 */
-	protected abstract function returnSpec();
+	public abstract function returnSpec();
 
 	/** Describe the action briefly.
 	 *
 	 *	@return	string	A description of what the action does.
 	 */
-	protected abstract function getDescription();
+	public abstract function getDescription();
 
 	/** Actually perform the action. Redefine this to implement the action 
 	 *	itself.
@@ -78,6 +78,17 @@ abstract class Action
 	 *	@return	mixed				The return value of the action.
 	 */
 	protected abstract function doIt($arguments);
+
+	/** Get the name of the action.
+	 *
+	 *	@return	string	The name of this action.
+	 */
+	public final function getName() {
+		$action_name = get_class($this);
+		$action_name = preg_replace("/Action$/", "", $action_name);
+		$action_name[0] = strtolower($action_name[0]);
+		return $action_name;
+	}
 
 	/** The public interface to executing the action.
 	 *
@@ -150,9 +161,7 @@ abstract class Action
 	 *	@return	string	A <div> containing a description of the action.
 	 */
 	public final function toHTML() {
-		$action_name = get_class($this);
-		$action_name = preg_replace("/Action$/", "", $action_name);
-		$action_name[0] = strtolower($action_name);
+		$action_name = $this->getName();
 
 		$arguments = $this->argumentSpec();
 		ksort($arguments);

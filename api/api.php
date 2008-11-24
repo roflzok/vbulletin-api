@@ -58,10 +58,29 @@ try {
 	$request = $encoder->decode($request);
 
 	// Find the appropriate action
-	$action = Actions::getAction($request['action']);
+	$action = NULL;
+	try {
+		$action = Actions::getAction($request['action']);
+	} catch (Exception $e) {
+		// Try to get the encoder to handle it, it could be an 
+		// encoding-specific action.
+		$response = $encoder->execute($request);
+		$response = $encoder->encode($response);
+		output_and_exit($encoder->getMimeType(), $response);
+	}
+
+	// Fiddle the parameters to fit the way we do things
+	$params = $request['params'];
+	if (count($params) == 0) {
+		$params = array();
+	} else if (count($params) == 1 && is_array($params[0])) {
+		$params = $params[0];
+	} else {
+		throw new Exception("There should be at most one parameter which should be an associative array");
+	}
 	
 	// Execute the action and return the result
-	$response = $action->execute($request['params']);
+	$response = $action->execute($params);
 	
 	// Encode the response
 	$response = $encoder->encode($response);

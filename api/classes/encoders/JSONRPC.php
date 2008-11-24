@@ -105,18 +105,6 @@ extends Encoder
 			throw new Exception("Only JSON-RPC 2.0 is accepted");
 		}
 
-		// Ensure that there is only one parameter and that parameter must be 
-		// an associative array. If no parameters have been supplied, fake them 
-		// out with a NULL
-		$params = NULL;
-		if (array_key_exists("params", $decoded_data)) {
-			if (count($decoded_data['params']) != 1) {
-				throw new Exception("There may only be one parameter and it must be an associative array or null");
-			}
-
-			$params = array_shift($decoded_data['params']);
-		}
-
 		// Record the ID if it has been sent
 		if (array_key_exists("id", $decoded_data)) {
 			if (is_integer($decoded_data['id'])) {
@@ -128,7 +116,7 @@ extends Encoder
 
 		return array(
 			'action' => $decoded_data['method'],
-			'params' => $params
+			'params' => $decoded_data['params']
 		);
 	}
 
