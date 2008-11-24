@@ -78,9 +78,8 @@ class Actions {
 
 	/** Get all the actions currently available.
 	 *
-	 *	@return	array	An associative array where the keys are the names of 
-	 *					the actions and the values are the {@link Action} 
-	 *					objects themselves.
+	 *	@return	array	An array of all the {@link Action}s currently defined, 
+	 *					ordered by name. 
 	 */
 	public static function getAllActions() {
 		$action_suffix = "Action.php";
