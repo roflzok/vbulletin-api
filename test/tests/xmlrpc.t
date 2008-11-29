@@ -93,12 +93,16 @@ isa_ok($xml_rpc_client, "RPC::XML::Client", "new RPC::XML::Client()");
 # Test system.listMethods
 {
 	my $response = $xml_rpc_client->send_request("system.listMethods");
-	if ($response->isa("RPC::XML::fault")) {
-		fail("system.listMethods()");
+	if ($response) {
+		if ($response->isa("RPC::XML::fault")) {
+			fail("system.listMethods()");
+		} else {
+			$response = $response->value;
+			my @expected_method_names = sort keys %METHODS;
+			is_deeply($response, \@expected_method_names, "system.listMethods()");
+		}
 	} else {
-		$response = $response->value;
-		my @expected_method_names = sort keys %METHODS;
-		is_deeply($response, \@expected_method_names, "system.listMethods()");
+		fail("system.listMethods()");
 	}
 }
 
@@ -133,11 +137,11 @@ isa_ok($xml_rpc_client, "RPC::XML::Client", "new RPC::XML::Client()");
 	foreach my $method (sort keys %METHODS) {
 		foreach my $test_data (@{$METHODS{$method}{"good"}}) {
 			my $response = $xml_rpc_client->send_request($method, $test_data);
-			isa_ok($response, "RPC::XML::struct");
+			isa_ok($response, "RPC::XML::struct", $method);
 		}
 		foreach my $test_data (@{$METHODS{$method}{"bad"}}) {
 			my $response = $xml_rpc_client->send_request($method, $test_data);
-			isa_ok($response, "RPC::XML::fault");
+			isa_ok($response, "RPC::XML::fault", $method);
 		}
 	}
 }

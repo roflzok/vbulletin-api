@@ -37,10 +37,13 @@ include_once("DataObject.php");
 /** Represent a post in a vBulletin system.
  *
  *	@property	int $id				The ID of the post within vBulletin.
+ *	@property	int $threadId		The ID of the thread within vBulletin which 
+ *									this post resides.
  *	@property	User $author		The author of the post
  *	@property	DateTime $timestamp	The time and date that the post was 
  *									created.
  *	@property	string $text		The text of the post, in BBCode format.
+ *	@property	string $title		The title of the text, if any.
  *	@package	vBulletinAPI
  */
 class Post
@@ -49,17 +52,34 @@ extends DataObject
 	/** Create a new {@link Post}.
 	 *
 	 *	@param	int $id				The post's vBulletin ID.
+ 	 *	@param	int $thread_id		The ID of the thread within vBulletin which 
+	 *								this post resides.
 	 *	@param	User $author		The author of the post
 	 *	@param	DateTime $timestamp	The time and date that the post was 
 	 *								created.
 	 *	@param	string $text		The text of the post with BBCode markup, if 
 	 *								any.
+	 *	@param	string $title		The title of the post, if any.
 	 */
-	public function __construct($id, User $author, $timestamp, $text) {
+	public function __construct($id, $thread_id, User $author, DateTime $timestamp, $text = "", $title = "") {
 		$this->data['id'] = $id;
+		$this->data['threadId'] = $thread_id;
 		$this->data['author'] = $author;
 		$this->data['timestamp'] = $timestamp;
 		$this->data['text'] = $text;
+		$this->data['title'] = $title;
+	}
+
+	/** Default values for the properties. These will be used to minimise the 
+	 *	data to be sent over the wire.
+	 *
+	 *	@return	array	Default values for properties which have them.
+	 */
+	protected function defaultPropertyValues() {
+		return array(
+			"title" => "",
+			"text" => "",
+		);
 	}
 }
 ?>

@@ -87,6 +87,15 @@ abstract class DataObject {
 		throw new Exception("No such property $name");
 	}
 
+	/** Default values for the properties. These will be used to minimise the 
+	 *	data to be sent over the wire.
+	 *
+	 *	@return	array	Default values for properties which have them.
+	 */
+	protected function defaultPropertyValues() {
+		return array();
+	}
+
 	/** Export this object as an array with all the properties as elements and 
 	 *	converting everything within that array to an array or a scalar.
 	 *
@@ -98,7 +107,18 @@ abstract class DataObject {
 	 *	@return	array	An array as described above.
 	 */
 	public function export() {
-		return self::exportArray($this->data);
+		$data_to_export = array();
+		$defaults = $this->defaultPropertyValues();
+		foreach ($this->data as $key => $value) {
+			if (array_key_exists($key, $defaults)) {
+				if ($value !== $defaults[$key]) {
+					$data_to_export[$key] = $value;
+				}
+			} else {
+				$data_to_export[$key] = $value;
+			}
+		}
+		return self::exportArray($data_to_export);
 	}
 
 	/**	Export an array just like {@link DataObject::export()}. 
