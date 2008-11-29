@@ -108,15 +108,17 @@ extends Action
 		$count = $arguments['count'];
 
 		// XXX Fake data XXX
+		$fake_forum_id = 123;
+		$fake_thread_title = "Thread title";
 		$fake_user = new User(103325, "IRLConor");
 		$fake_post_time = new DateTime();
 		$fake_posts = array();
 		for ($i = $start; $i < $count; $i++) {
 			$fake_post_contents = "Post number $i here.";
-			$fake_posts[$i] = new Post(($thread_id + $i), $fake_user, $fake_post_time, $fake_post_contents);
+			$fake_posts[$i] = new Post(($thread_id + $i), $thread_id, $fake_user, $fake_post_time, $fake_post_contents);
 		}
 		
-		return new Thread($thread_id, $fake_posts);
+		return new Thread($thread_id, $fake_forum_id, $fake_thread_title, $fake_post_time, count($fake_posts), $fake_posts);
 	}
 }
 

@@ -53,5 +53,14 @@ extends DataObject
 		$this->data['id'] = $id;
 		$this->data['name'] = $name;
 	}
+	
+	/** Default values for the properties. These will be used to minimise the 
+	 *	data to be sent over the wire.
+	 *
+	 *	@return	array	Default values for properties which have them.
+	 */
+	protected function defaultPropertyValues() {
+		return array();
+	}
 }
 ?>
