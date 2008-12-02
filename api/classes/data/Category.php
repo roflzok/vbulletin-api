@@ -35,26 +35,33 @@
 /** The base class. */
 include_once("DataObject.php");
 
-/** Represent a vBulletin user.
+/** Represent all or part of a category in a vBulletin system.
  *
- *	@property	int $id 		The user's vBulletin ID.
- *	@property	string $name		The name of the user.
- *	@property	string $realname	The user's real name.
+ *	@property	int $id 	The ID of the category within vBulletin
+ *	@property	string $name	The category name.
+ *	@property	mixed $parent	The parent object for this category. It could
+ *								be either a {@link Site} or a {@link Category}.
+ *	@property	array $forums	An array of the {@link Forum}s that belong in
+ *								this {@link Category}.
  *	@package	vBulletinAPI
  */
-class User
+class Category
 extends DataObject
 {
-	/** Create a new {@link User}.
+	/** Create a new {@link Category}.
 	 *
-	 *	@param	int $id 		The user's vBulletin ID.
-	 *	@param	string $name		The name of the user.
-	 *	@param	string $realname	The user's real name.
+	 *	@param	int $id 	The ID of the category within vBulletin
+	 *	@param	string $name	The category name.
+	 *	@param	mixed $parent	The parent object for this category. It could
+	 *							be either a {@link Site} or a {@link Category}.
+	 *	@param	array $forums	An array of the {@link Forum}s that belong in
+	 *							this {@link Category}.
 	 */
-	public function __construct($id, $name = "", $realname = "") {
+	public function __construct($id, $name = "", $parent = NULL, $forums = array()) {
 		$this->data['id'] = $id;
 		$this->data['name'] = $name;
-		$this->data['realname'] = $realname;
+		$this->data['parent'] = $parent;
+		$this->data['forums'] = $forums;
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -65,7 +72,8 @@ extends DataObject
 	protected function defaultPropertyValues() {
 		return array(
 			"name" => "",
-			"realname" => "",
+			"parent" => NULL,
+			"forums" => array(),
 		);
 	}
 }

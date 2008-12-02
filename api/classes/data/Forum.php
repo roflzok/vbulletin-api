@@ -35,26 +35,42 @@
 /** The base class. */
 include_once("DataObject.php");
 
-/** Represent a vBulletin user.
+/** Represent all or part of a forum in a vBulletin system.
  *
- *	@property	int $id 		The user's vBulletin ID.
- *	@property	string $name		The name of the user.
- *	@property	string $realname	The user's real name.
+ *	@property	int $id 		The ID of the forum within vBulletin
+ *	@property	string $name		The forum name.
+ *	@property	mixed $parent	The parent object for this forum. It could be
+ *								either a {@link Site}, a {@link Category} or a
+ *								{@link Forum}.
+ *	@property	array $threads	An array where the keys are the date of last
+ *								update and the values are {@link Thread}
+ *								objects.
+ *	@property	array $subForums	An array of {@link Forum}s which are
+ *									children of this forum.
  *	@package	vBulletinAPI
  */
-class User
+class Forum
 extends DataObject
 {
-	/** Create a new {@link User}.
+	/** Create a new {@link Forum}.
 	 *
-	 *	@param	int $id 		The user's vBulletin ID.
-	 *	@param	string $name		The name of the user.
-	 *	@param	string $realname	The user's real name.
+	 *	@param	int $id 		The ID of the forum within vBulletin
+	 *	@param	string $name		The forum name.
+	 *	@param	mixed $parent	The parent object for this forum. It could be
+	 *							either a {@link Site}, a {@link Category} or a
+	 *							{@link Forum}.
+	 *	@param	array $threads	An array where the keys are the date of last
+	 *							update and the values are {@link Thread}
+	 *							objects.
+	 *	@param	array $subForums	An array of {@link Forum}s which are
+	 *								children of this forum.
 	 */
-	public function __construct($id, $name = "", $realname = "") {
+	public function __construct($id, $name = "", $parent = NULL, $threads = array(), $subForums = array()) {
 		$this->data['id'] = $id;
 		$this->data['name'] = $name;
-		$this->data['realname'] = $realname;
+		$this->data['parent'] = $parent;
+		$this->data['threads'] = $threads;
+		$this->data['subForums'] = $subForums;
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -65,7 +81,9 @@ extends DataObject
 	protected function defaultPropertyValues() {
 		return array(
 			"name" => "",
-			"realname" => "",
+			"parent" => NULL,
+			"threads" => array(),
+			"subForums" => array(),
 		);
 	}
 }
