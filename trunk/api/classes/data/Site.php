@@ -35,38 +35,25 @@
 /** The base class. */
 include_once("DataObject.php");
 
-/** Represent a vBulletin user.
+/** Represent the top-level of a vBulletin installation.
  *
- *	@property	int $id 		The user's vBulletin ID.
- *	@property	string $name		The name of the user.
- *	@property	string $realname	The user's real name.
+ *	@property	string $name		The name of the site.
+ *	@property	array $categories	An array of the {@link Category}s that make
+ *									up the vBulletin instance.
  *	@package	vBulletinAPI
  */
-class User
+class Site
 extends DataObject
 {
-	/** Create a new {@link User}.
+	/** Create a new {@link Site}.
 	 *
-	 *	@param	int $id 		The user's vBulletin ID.
-	 *	@param	string $name		The name of the user.
-	 *	@param	string $realname	The user's real name.
+	 *	@param	string $name		The name of the site.
+	 *	@param	array $categories	An array of the {@link Category}s that make
+	 *								up the vBulletin instance.
 	 */
-	public function __construct($id, $name = "", $realname = "") {
-		$this->data['id'] = $id;
+	public function __construct($name, $categories) {
 		$this->data['name'] = $name;
-		$this->data['realname'] = $realname;
-	}
-
-	/** Default values for the properties. These will be used to minimise the 
-	 *	data to be sent over the wire.
-	 *
-	 *	@return	array	Default values for properties which have them.
-	 */
-	protected function defaultPropertyValues() {
-		return array(
-			"name" => "",
-			"realname" => "",
-		);
+		$this->data['categories'] = $categories;
 	}
 }
 ?>

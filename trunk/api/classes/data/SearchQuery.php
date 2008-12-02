@@ -35,26 +35,20 @@
 /** The base class. */
 include_once("DataObject.php");
 
-/** Represent a vBulletin user.
+/** A query object for the search function.
  *
- *	@property	int $id 		The user's vBulletin ID.
- *	@property	string $name		The name of the user.
- *	@property	string $realname	The user's real name.
+ *	@property	array $keywords Keywords to search for.
  *	@package	vBulletinAPI
  */
-class User
+class SearchQuery
 extends DataObject
 {
-	/** Create a new {@link User}.
+	/** Create a new {@link SearchQuery}.
 	 *
-	 *	@param	int $id 		The user's vBulletin ID.
-	 *	@param	string $name		The name of the user.
-	 *	@param	string $realname	The user's real name.
+	 *	@param	array $keywords Keywords to search for.
 	 */
-	public function __construct($id, $name = "", $realname = "") {
-		$this->data['id'] = $id;
-		$this->data['name'] = $name;
-		$this->data['realname'] = $realname;
+	public function __construct($keywords = array()) {
+		$this->data['keywords'] = $keywords;
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -64,8 +58,7 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
-			"name" => "",
-			"realname" => "",
+			"keywords" => array(),
 		);
 	}
 }
