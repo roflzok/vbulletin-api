@@ -61,7 +61,7 @@ extends DataObject
 	 *	@param	string $text		The text of the post, in BBCode format.
 	 *	@param	string $title		The title of the post, if any.
 	 */
-	public function __construct($id, $threadId, User $author, DateTime $timestamp, $text = "", $title = "") {
+	public function __construct($id, $threadId = -1, User $author = NULL, DateTime $timestamp = NULL, $text = "", $title = "") {
 		$this->data['id'] = $id;
 		$this->data['threadId'] = $threadId;
 		$this->data['author'] = $author;
@@ -77,6 +77,9 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
+			"threadId" => -1,
+			"author" => NULL,
+			"timestamp" => NULL,
 			"text" => "",
 			"title" => "",
 		);

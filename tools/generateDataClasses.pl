@@ -36,7 +36,6 @@ use warnings;
 use Text::Wrap;
 
 # The raw information for the data classes.
-my $NULL = sub {};
 my %DATA_CLASSES = (
 	"Category" => {
 		"CLASS_DESCRIPTION" => "Represent all or part of a category in a vBulletin system.",
@@ -112,16 +111,19 @@ my %DATA_CLASSES = (
 				"name" => "threadId",
 				"type" => "int",
 				"description" => "The ID of the thread within vBulletin in which this post resides.",
+				"default" => "-1",
 			},
 			{
 				"name" => "author",
 				"type" => "User",
 				"description" => "The author of the post.",
+				"default" => "NULL",
 			},
 			{
 				"name" => "timestamp",
 				"type" => "DateTime",
 				"description" => "The time and date that the post was created.",
+				"default" => "NULL",
 			},
 			{
 				"name" => "text",
@@ -145,6 +147,36 @@ my %DATA_CLASSES = (
 				"type" => "array",
 				"description" => "Keywords to search for.",
 				"default" => "array()",
+			},
+			{
+				"name" => "user",
+				"type" => "User",
+				"description" => "Restrict to this user.",
+				"default" => "NULL",
+			},
+			{
+				"name" => "minDate",
+				"type" => "DateTime",
+				"description" => "The earliest date/time to search for.",
+				"default" => "NULL",
+			},
+			{
+				"name" => "maxDate",
+				"type" => "DateTime",
+				"description" => "The latest date/time to search for.",
+				"default" => "NULL",
+			},
+			{
+				"name" => "minReplies",
+				"type" => "int",
+				"description" => "The minimum number of replies that must be in the thread containing each returned post.",
+				"default" => "0",
+			},
+			{
+				"name" => "maxReplies",
+				"type" => "int",
+				"description" => "The maximum number of replies that must be in the thread containing each returned post.",
+				"default" => "4294967295",
 			},
 		],
 	},
@@ -175,26 +207,31 @@ my %DATA_CLASSES = (
 				"name" => "forumId",
 				"type" => "int",
 				"description" => "The ID of the forum the thread is in.",
+				"default" => "-1",
 			},
 			{
 				"name" => "title",
 				"type" => "string",
 				"description" => "The thread title.",
+				"default" => "\"\"",
 			},
 			{
 				"name" => "timestamp",
 				"type" => "DateTime",
 				"description" => "The time of thread creation.",
+				"default" => "NULL",
 			},
 			{
 				"name" => "numPosts",
 				"type" => "int",
 				"description" => "The number of posts in the thread (NOT the number of posts being returned).",
+				"default" => "-1",
 			},
 			{
 				"name" => "posts",
 				"type" => "array",
 				"description" => "An array where the keys are post numbers and the values are {\@link Post} objects.",
+				"default" => "array()",
 			},
 			{
 				"name" => "open",
