@@ -65,7 +65,7 @@ extends DataObject
 	 *	@param	boolean $open		True if the thread is open, false
 	 *								otherwise.
 	 */
-	public function __construct($id, $forumId, $title, DateTime $timestamp, $numPosts, $posts, $open = TRUE) {
+	public function __construct($id, $forumId = -1, $title = "", DateTime $timestamp = NULL, $numPosts = -1, $posts = array(), $open = TRUE) {
 		$this->data['id'] = $id;
 		$this->data['forumId'] = $forumId;
 		$this->data['title'] = $title;
@@ -82,6 +82,11 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
+			"forumId" => -1,
+			"title" => "",
+			"timestamp" => NULL,
+			"numPosts" => -1,
+			"posts" => array(),
 			"open" => TRUE,
 		);
 	}

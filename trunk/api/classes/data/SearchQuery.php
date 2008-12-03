@@ -38,6 +38,13 @@ include_once("DataObject.php");
 /** A query object for the search function.
  *
  *	@property	array $keywords Keywords to search for.
+ *	@property	User $user		Restrict to this user.
+ *	@property	DateTime $minDate	The earliest date/time to search for.
+ *	@property	DateTime $maxDate	The latest date/time to search for.
+ *	@property	int $minReplies The minimum number of replies that must be in
+ *								the thread containing each returned post.
+ *	@property	int $maxReplies The maximum number of replies that must be in
+ *								the thread containing each returned post.
  *	@package	vBulletinAPI
  */
 class SearchQuery
@@ -46,9 +53,21 @@ extends DataObject
 	/** Create a new {@link SearchQuery}.
 	 *
 	 *	@param	array $keywords Keywords to search for.
+	 *	@param	User $user		Restrict to this user.
+	 *	@param	DateTime $minDate	The earliest date/time to search for.
+	 *	@param	DateTime $maxDate	The latest date/time to search for.
+	 *	@param	int $minReplies The minimum number of replies that must be in
+	 *							the thread containing each returned post.
+	 *	@param	int $maxReplies The maximum number of replies that must be in
+	 *							the thread containing each returned post.
 	 */
-	public function __construct($keywords = array()) {
+	public function __construct($keywords = array(), User $user = NULL, DateTime $minDate = NULL, DateTime $maxDate = NULL, $minReplies = 0, $maxReplies = 4294967295) {
 		$this->data['keywords'] = $keywords;
+		$this->data['user'] = $user;
+		$this->data['minDate'] = $minDate;
+		$this->data['maxDate'] = $maxDate;
+		$this->data['minReplies'] = $minReplies;
+		$this->data['maxReplies'] = $maxReplies;
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -59,6 +78,11 @@ extends DataObject
 	protected function defaultPropertyValues() {
 		return array(
 			"keywords" => array(),
+			"user" => NULL,
+			"minDate" => NULL,
+			"maxDate" => NULL,
+			"minReplies" => 0,
+			"maxReplies" => 4294967295,
 		);
 	}
 }
