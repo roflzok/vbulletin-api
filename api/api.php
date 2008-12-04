@@ -35,9 +35,9 @@
  */
 
 /** The Actions factory. */
-include_once("classes/Actions.php");
+require_once("classes/Actions.php");
 /** The Encoders factory. */
-include_once("classes/Encoders.php");
+require_once("classes/Encoders.php");
 
 // Get the POST data
 $request = file_get_contents('php://input');

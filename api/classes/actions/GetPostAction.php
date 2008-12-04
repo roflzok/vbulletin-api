@@ -32,12 +32,14 @@
  *	@filesource
  */
 
+/** vBulletin functions. */
+require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
 /** Include base class. */
-include_once("base/Action.php");
+require_once("base/Action.php");
 /** vBulletin post. */
-include_once(dirname(dirname(__FILE__)) . "/data/Post.php");
+require_once(dirname(dirname(__FILE__)) . "/data/Post.php");
 /** vBulletin user. */
-include_once(dirname(dirname(__FILE__)) . "/data/User.php");
+require_once(dirname(dirname(__FILE__)) . "/data/User.php");
 
 /**	Get a single post.
  *

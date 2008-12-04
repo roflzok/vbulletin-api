@@ -33,7 +33,7 @@
  */
 
 /** The base class. */
-include_once("DataObject.php");
+require_once("DataObject.php");
 
 /** Represent all or part of a category in a vBulletin system.
  *

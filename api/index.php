@@ -33,9 +33,9 @@
  */
 
 /** Actions factory. */
-include_once("classes/Actions.php");
+require_once("classes/Actions.php");
 /** Encoders factory. */
-include_once("classes/Encoders.php");
+require_once("classes/Encoders.php");
 
 // Describe the actions
 $actions_html = "";
