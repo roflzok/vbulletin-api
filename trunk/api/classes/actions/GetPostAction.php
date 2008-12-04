@@ -33,7 +33,7 @@
  */
 
 /** vBulletin functions. */
-require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
+require_once(dirname(dirname(dirname(__FILE__))) . "/vbulletin.php");
 /** Include base class. */
 require_once("base/Action.php");
 /** vBulletin post. */
