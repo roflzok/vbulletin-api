@@ -407,7 +407,7 @@ ${COPYRIGHT}
  */
 
 /** The base class. */
-include_once("DataObject.php");
+require_once("DataObject.php");
 
 /** ${CLASS_DESCRIPTION}
  *

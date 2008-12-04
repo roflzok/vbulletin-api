@@ -33,7 +33,7 @@
  */
 
 /** The base class. */
-include_once("DataObject.php");
+require_once("DataObject.php");
 
 /** Represent a vBulletin user.
  *

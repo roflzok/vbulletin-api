@@ -33,7 +33,7 @@
  */
 
 /** The base class. */
-include_once("base/Encoder.php");
+require_once("base/Encoder.php");
 
 /** An encoder/decoder for XML-RPC messages.
  *
