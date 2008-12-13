@@ -34,4 +34,14 @@
 
 /** Include vBulletin functions.php */
 $VBULLETIN_PATH = "";
+
+// Load all the vBulletin files we'll need
+if ($VBULLETIN_PATH !== "" && is_dir($VBULLETIN_PATH)) {
+	$cwd = getcwd();
+	chdir($VBULLETIN_PATH);
+	require_once("$VBULLETIN_PATH/global.php");
+	chdir($cwd);
+} else {
+	throw new Exception("Path to vBulletin is not configured in " . __FILE__);
+}
 ?>

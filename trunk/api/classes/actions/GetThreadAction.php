@@ -113,7 +113,7 @@ extends Action
 		$fake_forum_id = 123;
 		$fake_thread_title = "Thread title";
 		$fake_user = new User(103325, "IRLConor");
-		$fake_post_time = new DateTime();
+		$fake_post_time = new DateTime("now", new DateTimeZone("UTC"));
 		$fake_posts = array();
 		for ($i = $start; $i < $count; $i++) {
 			$fake_post_contents = "Post number $i here.";
