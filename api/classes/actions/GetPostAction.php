@@ -103,7 +103,7 @@ extends Action
 		$poster_name = "IRLConor";
 		$post_contents = "Hello World!";
 		
-		return new Post($post_id, $thread_id, new User($poster_id, $poster_name), new DateTime(), $post_contents);
+		return new Post($post_id, $thread_id, new User($poster_id, $poster_name), new DateTime("now", new DateTimeZone("UTC")), $post_contents);
 	}
 }
 
