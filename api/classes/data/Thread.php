@@ -32,47 +32,101 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("DataObject.php");
 
 /** Represent all or part of a thread in a vBulletin system.
  *
- *	@property	int $id 			The ID of the thread within vBulletin.
- *	@property	int $forumId		The ID of the forum the thread is in.
- *	@property	string $title		The thread title.
- *	@property	DateTime $timestamp The time of thread creation.
- *	@property	int $numPosts		The number of posts in the thread (NOT the
- *									number of posts being returned).
- *	@property	array $posts		An array where the keys are post numbers
- *									and the values are {@link Post} objects.
- *	@property	boolean $open		True if the thread is open, false
- *									otherwise.
+ *	@property	int $id 				The ID of the thread within vBulletin.
+ *	@property	int $forumId				The ID of the forum the thread is
+ *											in.
+ *	@property	string $title			The thread title.
+ *	@property	DateTime $createTime		The time of thread creation.
+ *	@property	DateTime $lastUpdateTime	The time the thread was last
+ *											updated.
+ *	@property	int $status 			A bitmask describing the status of this
+ *										thread
+ *	@property	int $numPosts			The number of posts in the thread (NOT
+ *										the number of posts being returned).
+ *	@property	int $numViews			The number of times the thread has been
+ *										viewed.
+ *	@property	array $posts				An array where the keys are post
+ *											numbers and the values are {@link
+ *											Post} objects.
+ *	@property	Poll $poll				The poll (if any) which is attached to
+ *										this thread.
+ *	@property	Icon $icon				The icon (if any) for this thread.
+ *	@property	int $numStars			The star rating for this thread.
  *	@package	vBulletinAPI
  */
 class Thread
 extends DataObject
 {
+	/** The thread is locked. */
+	public static $STATUS_LOCKED = 1;
+
+	/** The thread is deleted. */
+	public static $STATUS_DELETED = 2;
+
+	/** The thread is sticky. */
+	public static $STATUS_STICKY = 4;
+
+	/** The thread contains posts with attachments */
+	public static $STATUS_HAS_ATTACHMENTS = 8;
+
+	/** The thread contains deleted posts */
+	public static $STATUS_HAS_DELETED_POSTS = 16;
+
+	/** The thread contains hidden posts */
+	public static $STATUS_HAS_HIDDEN_POSTS = 32;
+
 	/** Create a new {@link Thread}.
 	 *
-	 *	@param	int $id 			The ID of the thread within vBulletin.
-	 *	@param	int $forumId		The ID of the forum the thread is in.
-	 *	@param	string $title		The thread title.
-	 *	@param	DateTime $timestamp The time of thread creation.
-	 *	@param	int $numPosts		The number of posts in the thread (NOT the
-	 *								number of posts being returned).
-	 *	@param	array $posts		An array where the keys are post numbers
-	 *								and the values are {@link Post} objects.
-	 *	@param	boolean $open		True if the thread is open, false
-	 *								otherwise.
+	 *	@param	int $id 				The ID of the thread within vBulletin.
+	 *	@param	int $forumId				The ID of the forum the thread is
+	 *										in.
+	 *	@param	string $title			The thread title.
+	 *	@param	DateTime $createTime		The time of thread creation.
+	 *	@param	DateTime $lastUpdateTime	The time the thread was last
+	 *										updated.
+	 *	@param	int $status 			A bitmask describing the status of this
+	 *									thread
+	 *	@param	int $numPosts			The number of posts in the thread (NOT
+	 *									the number of posts being returned).
+	 *	@param	int $numViews			The number of times the thread has been
+	 *									viewed.
+	 *	@param	array $posts				An array where the keys are post
+	 *										numbers and the values are {@link
+	 *										Post} objects.
+	 *	@param	Poll $poll				The poll (if any) which is attached to
+	 *									this thread.
+	 *	@param	Icon $icon				The icon (if any) for this thread.
+	 *	@param	int $numStars			The star rating for this thread.
 	 */
-	public function __construct($id, $forumId = -1, $title = "", DateTime $timestamp = NULL, $numPosts = -1, $posts = array(), $open = TRUE) {
+	public function __construct($id, $forumId = -1, $title = "", DateTime $createTime = NULL, DateTime $lastUpdateTime = NULL, $status = 0, $numPosts = -1, $numViews = -1, $posts = array(), Poll $poll = NULL, Icon $icon = NULL, $numStars = -1) {
 		$this->data['id'] = $id;
+		$this->type['id'] = "int";
 		$this->data['forumId'] = $forumId;
+		$this->type['forumId'] = "int";
 		$this->data['title'] = $title;
-		$this->data['timestamp'] = $timestamp;
+		$this->type['title'] = "string";
+		$this->data['createTime'] = $createTime;
+		$this->type['createTime'] = "DateTime";
+		$this->data['lastUpdateTime'] = $lastUpdateTime;
+		$this->type['lastUpdateTime'] = "DateTime";
+		$this->data['status'] = $status;
+		$this->type['status'] = "int";
 		$this->data['numPosts'] = $numPosts;
+		$this->type['numPosts'] = "int";
+		$this->data['numViews'] = $numViews;
+		$this->type['numViews'] = "int";
 		$this->data['posts'] = $posts;
-		$this->data['open'] = $open;
+		$this->type['posts'] = "array";
+		$this->data['poll'] = $poll;
+		$this->type['poll'] = "Poll";
+		$this->data['icon'] = $icon;
+		$this->type['icon'] = "Icon";
+		$this->data['numStars'] = $numStars;
+		$this->type['numStars'] = "int";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -84,10 +138,15 @@ extends DataObject
 		return array(
 			"forumId" => -1,
 			"title" => "",
-			"timestamp" => NULL,
+			"createTime" => NULL,
+			"lastUpdateTime" => NULL,
+			"status" => 0,
 			"numPosts" => -1,
+			"numViews" => -1,
 			"posts" => array(),
-			"open" => TRUE,
+			"poll" => NULL,
+			"icon" => NULL,
+			"numStars" => -1,
 		);
 	}
 }

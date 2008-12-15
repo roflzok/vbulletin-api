@@ -32,7 +32,6 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("DataObject.php");
 
 /** Represent a vBulletin user.
@@ -53,8 +52,11 @@ extends DataObject
 	 */
 	public function __construct($id, $name = "", $realname = "") {
 		$this->data['id'] = $id;
+		$this->type['id'] = "int";
 		$this->data['name'] = $name;
+		$this->type['name'] = "string";
 		$this->data['realname'] = $realname;
+		$this->type['realname'] = "string";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 

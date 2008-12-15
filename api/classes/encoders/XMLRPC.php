@@ -32,7 +32,6 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("base/Encoder.php");
 
 /** An encoder/decoder for XML-RPC messages.

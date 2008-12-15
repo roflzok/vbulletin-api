@@ -34,47 +34,29 @@
 
 require_once("DataObject.php");
 
-/** Represent all or part of a forum in a vBulletin system.
+/** A struct for describing an edit to a Post.
  *
- *	@property	int $id 		The ID of the forum within vBulletin
- *	@property	string $name		The forum name.
- *	@property	mixed $parent	The parent object for this forum. It could be
- *								either a {@link Site}, a {@link Category} or a
- *								{@link Forum}.
- *	@property	array $threads	An array where the keys are the date of last
- *								update and the values are {@link Thread}
- *								objects.
- *	@property	array $subForums	An array of {@link Forum}s which are
- *									children of this forum.
+ *	@property	DateTime $time	The time at which the edit occurred
+ *	@property	User $editor	The User who edited the post
+ *	@property	string $reason	The reason given for editing the post
  *	@package	vBulletinAPI
  */
-class Forum
+class PostEdit
 extends DataObject
 {
-	/** Create a new {@link Forum}.
+	/** Create a new {@link PostEdit}.
 	 *
-	 *	@param	int $id 		The ID of the forum within vBulletin
-	 *	@param	string $name		The forum name.
-	 *	@param	mixed $parent	The parent object for this forum. It could be
-	 *							either a {@link Site}, a {@link Category} or a
-	 *							{@link Forum}.
-	 *	@param	array $threads	An array where the keys are the date of last
-	 *							update and the values are {@link Thread}
-	 *							objects.
-	 *	@param	array $subForums	An array of {@link Forum}s which are
-	 *								children of this forum.
+	 *	@param	DateTime $time	The time at which the edit occurred
+	 *	@param	User $editor	The User who edited the post
+	 *	@param	string $reason	The reason given for editing the post
 	 */
-	public function __construct($id, $name = "", $parent = NULL, $threads = array(), $subForums = array()) {
-		$this->data['id'] = $id;
-		$this->type['id'] = "int";
-		$this->data['name'] = $name;
-		$this->type['name'] = "string";
-		$this->data['parent'] = $parent;
-		$this->type['parent'] = "mixed";
-		$this->data['threads'] = $threads;
-		$this->type['threads'] = "array";
-		$this->data['subForums'] = $subForums;
-		$this->type['subForums'] = "array";
+	public function __construct(DateTime $time, User $editor, $reason = "") {
+		$this->data['time'] = $time;
+		$this->type['time'] = "DateTime";
+		$this->data['editor'] = $editor;
+		$this->type['editor'] = "User";
+		$this->data['reason'] = $reason;
+		$this->type['reason'] = "string";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -84,10 +66,7 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
-			"name" => "",
-			"parent" => NULL,
-			"threads" => array(),
-			"subForums" => array(),
+			"reason" => "",
 		);
 	}
 }

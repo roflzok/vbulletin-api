@@ -32,42 +32,82 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("DataObject.php");
 
 /** Represent a post in a vBulletin system.
  *
  *	@property	int $id 			The ID of the post within vBulletin.
- *	@property	int $threadId		The ID of the thread within vBulletin in
- *									which this post resides.
- *	@property	User $author		The author of the post.
- *	@property	DateTime $timestamp The time and date that the post was
- *									created.
- *	@property	string $text		The text of the post, in BBCode format.
- *	@property	string $title		The title of the post, if any.
+ *	@property	int $threadId			The ID of the thread within vBulletin
+ *										in which this post resides.
+ *	@property	User $author			The author of the post.
+ *	@property	DateTime $createTime	The time and date that the post was
+ *										created.
+ *	@property	string $text			The text of the post, in BBCode format.
+ *	@property	string $title			The title of the post, if any.
+ *	@property	int $status 		The status of the post
+ *	@property	PostEdit $edited		The last edit made to the post, if any.
+ *	@property	Icon $icon				An icon for the post
+ *	@property	Infraction $infraction	Any infraction given for the post.
+ *	@property	Thread $reportThread	The thread created when this post was
+ *										reported.
+ *	@property	string $ip				The IP address the post was made from.
  *	@package	vBulletinAPI
  */
 class Post
 extends DataObject
 {
+	/** The post is invisible. */
+	public static $STATUS_INVISIBLE = 1;
+
+	/** The post is deleted. */
+	public static $STATUS_DELETED = 2;
+
+	/** The post is deleted. */
+	public static $STATUS_HAS_ATTACHMENT = 4;
+
 	/** Create a new {@link Post}.
 	 *
 	 *	@param	int $id 			The ID of the post within vBulletin.
-	 *	@param	int $threadId		The ID of the thread within vBulletin in
-	 *								which this post resides.
-	 *	@param	User $author		The author of the post.
-	 *	@param	DateTime $timestamp The time and date that the post was
-	 *								created.
-	 *	@param	string $text		The text of the post, in BBCode format.
-	 *	@param	string $title		The title of the post, if any.
+	 *	@param	int $threadId			The ID of the thread within vBulletin
+	 *									in which this post resides.
+	 *	@param	User $author			The author of the post.
+	 *	@param	DateTime $createTime	The time and date that the post was
+	 *									created.
+	 *	@param	string $text			The text of the post, in BBCode format.
+	 *	@param	string $title			The title of the post, if any.
+	 *	@param	int $status 		The status of the post
+	 *	@param	PostEdit $edited		The last edit made to the post, if any.
+	 *	@param	Icon $icon				An icon for the post
+	 *	@param	Infraction $infraction	Any infraction given for the post.
+	 *	@param	Thread $reportThread	The thread created when this post was
+	 *									reported.
+	 *	@param	string $ip				The IP address the post was made from.
 	 */
-	public function __construct($id, $threadId = -1, User $author = NULL, DateTime $timestamp = NULL, $text = "", $title = "") {
+	public function __construct($id, $threadId = 0, User $author = NULL, DateTime $createTime = NULL, $text = "", $title = "", $status = 0, PostEdit $edited = NULL, Icon $icon = NULL, Infraction $infraction = NULL, Thread $reportThread = NULL, $ip = "") {
 		$this->data['id'] = $id;
+		$this->type['id'] = "int";
 		$this->data['threadId'] = $threadId;
+		$this->type['threadId'] = "int";
 		$this->data['author'] = $author;
-		$this->data['timestamp'] = $timestamp;
+		$this->type['author'] = "User";
+		$this->data['createTime'] = $createTime;
+		$this->type['createTime'] = "DateTime";
 		$this->data['text'] = $text;
+		$this->type['text'] = "string";
 		$this->data['title'] = $title;
+		$this->type['title'] = "string";
+		$this->data['status'] = $status;
+		$this->type['status'] = "int";
+		$this->data['edited'] = $edited;
+		$this->type['edited'] = "PostEdit";
+		$this->data['icon'] = $icon;
+		$this->type['icon'] = "Icon";
+		$this->data['infraction'] = $infraction;
+		$this->type['infraction'] = "Infraction";
+		$this->data['reportThread'] = $reportThread;
+		$this->type['reportThread'] = "Thread";
+		$this->data['ip'] = $ip;
+		$this->type['ip'] = "string";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -77,11 +117,17 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
-			"threadId" => -1,
+			"threadId" => 0,
 			"author" => NULL,
-			"timestamp" => NULL,
+			"createTime" => NULL,
 			"text" => "",
 			"title" => "",
+			"status" => 0,
+			"edited" => NULL,
+			"icon" => NULL,
+			"infraction" => NULL,
+			"reportThread" => NULL,
+			"ip" => "",
 		);
 	}
 }

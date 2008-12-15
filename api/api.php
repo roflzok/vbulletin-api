@@ -34,9 +34,7 @@
  * @filesource
  */
 
-/** The Actions factory. */
 require_once("classes/Actions.php");
-/** The Encoders factory. */
 require_once("classes/Encoders.php");
 
 // Get the POST data
