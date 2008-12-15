@@ -32,7 +32,6 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("DataObject.php");
 
 /** A query object for the search function.
@@ -63,11 +62,17 @@ extends DataObject
 	 */
 	public function __construct($keywords = array(), User $user = NULL, DateTime $minDate = NULL, DateTime $maxDate = NULL, $minReplies = 0, $maxReplies = 4294967295) {
 		$this->data['keywords'] = $keywords;
+		$this->type['keywords'] = "array";
 		$this->data['user'] = $user;
+		$this->type['user'] = "User";
 		$this->data['minDate'] = $minDate;
+		$this->type['minDate'] = "DateTime";
 		$this->data['maxDate'] = $maxDate;
+		$this->type['maxDate'] = "DateTime";
 		$this->data['minReplies'] = $minReplies;
+		$this->type['minReplies'] = "int";
 		$this->data['maxReplies'] = $maxReplies;
+		$this->type['maxReplies'] = "int";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 

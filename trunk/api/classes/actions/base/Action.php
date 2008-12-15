@@ -188,7 +188,10 @@ abstract class Action
 		if ($arguments) {
 			$args = "";
 			foreach ($arguments as $argument_name => $arg_spec) {
-				$argument_default = $arg_spec['defaultValue'];
+				$argument_default = "";
+				if (array_key_exists('defaultValue', $arg_spec)) {
+					$argument_default = $arg_spec['defaultValue'];
+				}
 				$argument_description = $arg_spec['description'];
 				$args .= <<<HTML
 					<tr>

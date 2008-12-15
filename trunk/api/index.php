@@ -32,9 +32,7 @@
  *	@filesource
  */
 
-/** Actions factory. */
 require_once("classes/Actions.php");
-/** Encoders factory. */
 require_once("classes/Encoders.php");
 
 // Describe the actions

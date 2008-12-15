@@ -32,7 +32,6 @@
  *	@filesource
  */
 
-/** The base class. */
 require_once("DataObject.php");
 
 /** Represent the top-level of a vBulletin installation.
@@ -53,7 +52,9 @@ extends DataObject
 	 */
 	public function __construct($name, $categories) {
 		$this->data['name'] = $name;
+		$this->type['name'] = "string";
 		$this->data['categories'] = $categories;
+		$this->type['categories'] = "array";
 	}
 }
 ?>

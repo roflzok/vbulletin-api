@@ -50,7 +50,7 @@ class Actions {
 	 *								looked up and if it exists an instance 
 	 *								returned. If the action class requested 
 	 *								does not exist an exception will be thrown.
-	 * @return Action
+	 * @return Action				An instance of the Action requested.
 	 */
 	public static function getAction($action_name) {
 		if (!(preg_match("/^[a-z][a-zA-Z0-9]*$/", $action_name))) {

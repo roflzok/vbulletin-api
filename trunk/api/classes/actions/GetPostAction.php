@@ -32,13 +32,11 @@
  *	@filesource
  */
 
-/** vBulletin functions. */
-require_once(dirname(dirname(dirname(__FILE__))) . "/vbulletin.php");
-/** Include base class. */
 require_once("base/Action.php");
-/** vBulletin post. */
+require_once(dirname(dirname(__FILE__)) . "/Utils.php");
+require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
 require_once(dirname(dirname(__FILE__)) . "/data/Post.php");
-/** vBulletin user. */
+require_once(dirname(dirname(__FILE__)) . "/data/PostEdit.php");
 require_once(dirname(dirname(__FILE__)) . "/data/User.php");
 
 /**	Get a single post.
@@ -90,20 +88,119 @@ extends Action
 	 *	@return	Post				The post requested. If the post does not 
 	 *								exist or you are forbidden from viewing it 
 	 *								an exception will be thrown.
-	 *	@todo						This function needs to actually call the 
-	 *								vBulletin functions and return the post 
-	 *								properly.
 	 */
 	protected function doIt($arguments) {
 		$post_id = $arguments['postId'];
 
-		// Fake data, replace with the results of a call to the vBulletin API
-		$poster_id = 103325;
-		$thread_id = 1;
-		$poster_name = "IRLConor";
-		$post_contents = "Hello World!";
-		
-		return new Post($post_id, $thread_id, new User($poster_id, $poster_name), new DateTime("now", new DateTimeZone("UTC")), $post_contents);
+		// FIXME:
+		$can_see_deleted_posts = FALSE;
+		$can_see_hidden_posts = FALSE;
+		$can_see_infractions = FALSE;
+		$can_see_ip_addresses = FALSE;
+		$can_see_report_threads = FALSE;
+
+		// Get the post info
+		$post_info = VBulletin::call("fetch_postinfo", $post_id);
+		if ($post_info == NULL) {
+			throw new Exception("Post does not exist");
+		}
+
+		// Work out the status of the post
+		$status = 0;
+		if (array_key_exists('visible', $post_info)) {
+			if ($post_info['visible'] == 0) {
+				if ($can_see_hidden_posts) {
+					$status |= Post::$STATUS_INVISIBLE;
+				} else {
+					throw new Exception("Post does not exist");
+				}
+			}
+		}
+		if (array_key_exists('isdeleted', $post_info)) {
+			if ($post_info['isdeleted']) {
+				if ($can_see_deleted_posts) {
+					$status |= Post::$STATUS_DELETED;
+				} else {
+					throw new Exception("Post does not exist");
+				}
+			}
+		}
+		if (array_key_exists('attach', $post_info)) {
+			if ($post_info['attach']) {
+				$status |= Post::$STATUS_HAS_ATTACHMENT;
+			}
+		}
+
+		// Construct the post
+		$post = new Post($post_id);
+		if (array_key_exists('threadid', $post_info)) {
+			$post->threadId = $post_info['threadid'];
+		}
+		if	(
+				array_key_exists('userid', $post_info) &&
+				array_key_exists('username', $post_info)
+			) 
+		{
+			$post->author = new User(
+				$post_info['userid'], $post_info['username']
+			);
+		}
+		if (array_key_exists('dateline', $post_info)) {
+			$post->createTime = Utils::epochTimeToDateTime(
+				$post_info['dateline']
+			);
+		}
+		if (array_key_exists('pagetext', $post_info)) {
+			$post->text = $post_info['pagetext'];
+		}
+		if (array_key_exists('title', $post_info)) {
+			if ($post_info['title']) {
+				$post->title = $post_info['title'];
+			}
+		}
+		$post->status = $status;
+		if	(
+				array_key_exists('edit_dateline', $post_info) &&
+				array_key_exists('edit_userid', $post_info)
+			) 
+		{
+			if ($post_info['edit_dateline'] != NULL) {
+				$edit = new PostEdit(
+					Utils::epochTimeToDateTime($post_info['edit_dateline']),
+					new User($post_info['edit_userid'])
+				);
+				if (array_key_exists('edit_reason', $post_info)) {
+					$edit->reason = $post_info['edit_reason'];
+				}
+				$post->edited = $edit;
+			}
+		}
+		if (array_key_exists('iconid', $post_info)) {
+			if ($post_info['iconid'] > 0) {
+				$post->icon = new Icon($post_info['iconid']);
+			}
+		}
+		if ($can_see_infractions) {
+			if (array_key_exists('infraction', $post_info)) {
+				if ($post_info['infraction']) {
+					$post->infraction = new Infraction($post_info['infraction']);
+				}
+			}
+		}
+		if ($can_see_report_threads) {
+			if (array_key_exists('reportthreadid', $post_info)) {
+				if ($post_info['reportthreadid']) {
+					$post->reportThread = new Thread($post_info['reportthreadid']);
+				}
+			}
+		}
+		if ($can_see_ip_addresses) {
+			if (array_key_exists('ipaddress', $post_info)) {
+				$post->ip = $post_info['ipaddress'];
+			}
+		}
+
+		return $post;
 	}
 }
 

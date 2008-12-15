@@ -42,6 +42,9 @@ abstract class DataObject {
 	/** The backing store for all the properties. */
 	protected $data = array();
 
+	/** The types for each of the properties. */
+	protected $type = array();
+
 	/**	Magic method, see PHPs documentation for this.
 	 *
 	 *	@param	string $name	The name of the property to fetch.
@@ -50,7 +53,7 @@ abstract class DataObject {
 		if (array_key_exists($name, $this->data)) {
 			return $this->data[$name];
 		}
-		throw new Exception("No such property $name");
+		throw new Exception("No such property: $name");
 	}
 
 	/**	Magic method, see PHPs documentation for this.
@@ -61,8 +64,14 @@ abstract class DataObject {
 	public function __set($name, $value) {
 		if (array_key_exists($name, $this->data)) {
 			$this->data[$name] = $value;
+			if (preg_match("/^[a-z]/", $this->type[$name])) {
+				if (!settype($this->data[$name], $this->type[$name])) {
+					throw new Exception("Can't coerce {$this->data[$name]} into a {$this->type[$name]}");
+				}
+			}
+			return;
 		}
-		throw new Exception("No such property $name");
+		throw new Exception("No such property: $name");
 	}
 
 	/**	Magic method, see PHPs documentation for this.
@@ -73,7 +82,7 @@ abstract class DataObject {
 		if (array_key_exists($name, $this->data)) {
 			return isset($this->data[$name]);
 		}
-		throw new Exception("No such property $name");
+		throw new Exception("No such property: $name");
 	}
 
 	/**	Magic method, see PHPs documentation for this.
@@ -83,8 +92,9 @@ abstract class DataObject {
 	public function __unset($name) {
 		if (array_key_exists($name, $this->data)) {
 			$this->data[$name] = NULL;
+			return;
 		}
-		throw new Exception("No such property $name");
+		throw new Exception("No such property: $name");
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
