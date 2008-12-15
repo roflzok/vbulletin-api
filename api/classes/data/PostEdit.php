@@ -32,6 +32,7 @@
  *	@filesource
  */
 
+/** Base data class. */
 require_once("DataObject.php");
 
 /** A struct for describing an edit to a Post.

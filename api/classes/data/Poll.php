@@ -32,6 +32,7 @@
  *	@filesource
  */
 
+/** Base data class. */
 require_once("DataObject.php");
 
 /** Represent a poll in a vBulletin system.

@@ -32,13 +32,21 @@
  *	@filesource
  */
 
+/** The base Action. */
 require_once("base/Action.php");
+/** Utilities class. */
 require_once(dirname(dirname(__FILE__)) . "/Utils.php");
+/** Bridge to vBulletin. */
 require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
+/** Icon class. */
 require_once(dirname(dirname(__FILE__)) . "/data/Icon.php");
+/** Poll class. */
 require_once(dirname(dirname(__FILE__)) . "/data/Poll.php");
+/** Post class. */
 require_once(dirname(dirname(__FILE__)) . "/data/Post.php");
+/** Thread class. */
 require_once(dirname(dirname(__FILE__)) . "/data/Thread.php");
+/** User class. */
 require_once(dirname(dirname(__FILE__)) . "/data/User.php");
 
 /**	Get a thread or part of a thread.

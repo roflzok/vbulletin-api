@@ -32,11 +32,17 @@
  *	@filesource
  */
 
+/** The base Action. */
 require_once("base/Action.php");
+/** Utilities class. */
 require_once(dirname(dirname(__FILE__)) . "/Utils.php");
+/** Bridge to vBulletin. */
 require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
+/** Post object. */
 require_once(dirname(dirname(__FILE__)) . "/data/Post.php");
+/** PostEdit object. */
 require_once(dirname(dirname(__FILE__)) . "/data/PostEdit.php");
+/** User object. */
 require_once(dirname(dirname(__FILE__)) . "/data/User.php");
 
 /**	Get a single post.
