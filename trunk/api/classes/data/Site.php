@@ -32,6 +32,7 @@
  *	@filesource
  */
 
+/** Base data class. */
 require_once("DataObject.php");
 
 /** Represent the top-level of a vBulletin installation.

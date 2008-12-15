@@ -594,6 +594,7 @@ ${COPYRIGHT}
  *	@filesource
  */
 
+/** Base data class. */
 require_once("DataObject.php");
 
 /** ${CLASS_DESCRIPTION}

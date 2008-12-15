@@ -32,6 +32,7 @@
  * @package vBulletinAPI
  */
 
+/** Configuration file. */
 require_once(dirname(dirname(__FILE__)) . "/config.php");
 
 /** A facade for vBulletin so that other classes may call its functions.

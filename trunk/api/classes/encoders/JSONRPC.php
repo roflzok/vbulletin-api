@@ -32,6 +32,7 @@
  *	@filesource
  */
 
+/** Base encoder class. */
 require_once("base/Encoder.php");
 
 /** An encoder/decoder for JSON-RPC messages.

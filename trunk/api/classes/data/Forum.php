@@ -32,6 +32,7 @@
  *	@filesource
  */
 
+/** Base data class. */
 require_once("DataObject.php");
 
 /** Represent all or part of a forum in a vBulletin system.
