@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -38,8 +38,7 @@ require_once("DataObject.php");
 /** Represent all or part of a thread in a vBulletin system.
  *
  *	@property	int $id 				The ID of the thread within vBulletin.
- *	@property	int $forumId				The ID of the forum the thread is
- *											in.
+ *	@property	Forum $forum				The forum the thread is in.
  *	@property	string $title			The thread title.
  *	@property	DateTime $createTime		The time of thread creation.
  *	@property	DateTime $lastUpdateTime	The time the thread was last
@@ -83,8 +82,7 @@ extends DataObject
 	/** Create a new {@link Thread}.
 	 *
 	 *	@param	int $id 				The ID of the thread within vBulletin.
-	 *	@param	int $forumId				The ID of the forum the thread is
-	 *										in.
+	 *	@param	Forum $forum				The forum the thread is in.
 	 *	@param	string $title			The thread title.
 	 *	@param	DateTime $createTime		The time of thread creation.
 	 *	@param	DateTime $lastUpdateTime	The time the thread was last
@@ -103,11 +101,11 @@ extends DataObject
 	 *	@param	Icon $icon				The icon (if any) for this thread.
 	 *	@param	int $numStars			The star rating for this thread.
 	 */
-	public function __construct($id, $forumId = -1, $title = "", DateTime $createTime = NULL, DateTime $lastUpdateTime = NULL, $status = 0, $numPosts = -1, $numViews = -1, $posts = array(), Poll $poll = NULL, Icon $icon = NULL, $numStars = -1) {
+	public function __construct($id, Forum $forum = NULL, $title = "", DateTime $createTime = NULL, DateTime $lastUpdateTime = NULL, $status = 0, $numPosts = -1, $numViews = -1, $posts = array(), Poll $poll = NULL, Icon $icon = NULL, $numStars = -1) {
 		$this->data['id'] = $id;
 		$this->type['id'] = "int";
-		$this->data['forumId'] = $forumId;
-		$this->type['forumId'] = "int";
+		$this->data['forum'] = $forum;
+		$this->type['forum'] = "Forum";
 		$this->data['title'] = $title;
 		$this->type['title'] = "string";
 		$this->data['createTime'] = $createTime;
@@ -137,7 +135,7 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
-			"forumId" => -1,
+			"forum" => NULL,
 			"title" => "",
 			"createTime" => NULL,
 			"lastUpdateTime" => NULL,
@@ -148,6 +146,18 @@ extends DataObject
 			"poll" => NULL,
 			"icon" => NULL,
 			"numStars" => -1,
+		);
+	}
+	
+	/** Get the names of the required constructor parameters in the order in
+	 *	which they must appear in the constructor.
+	 *
+	 *	@return	array	An array containing the names of the properties which
+	 *					must appear in order in the constructor parameters.
+	 */
+	public static function requiredConstructorParams() {
+		return array(
+			"id",
 		);
 	}
 }

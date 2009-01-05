@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -76,6 +76,10 @@ extends Action
 				"description" => "The maximum number of posts to retrieve",
 				"validationFunction" => "is_integer",
 				"defaultValue" => 10
+			),
+			"user" => array(
+				"description" => "The user who is making the request",
+				"defaultValue" => new User(0)
 			)
 		);
 	}
@@ -112,16 +116,62 @@ extends Action
 		$thread_id = $arguments['threadId'];
 		$start = $arguments['start'];
 		$count = $arguments['count'];
-
-		// FIXME
-		$can_see_deleted_posts = FALSE;
-		$can_see_hidden_posts = FALSE;
-		$can_see_deleted_threads = FALSE;
+		$user = $arguments['user'];
 
 		$thread_info = VBulletin::call("fetch_threadinfo", $thread_id);
 		if ($thread_info === NULL) {
 			throw new Exception("The thread does not exist.");
 		}
+
+		// Create the thread and add some properties (if they're available).
+		$thread = new Thread($thread_id);
+		if (array_key_exists('forumid', $thread_info)) {
+			$thread->forum = new Forum($thread_info['forumid']);
+		}
+		if (array_key_exists('title', $thread_info)) {
+			$thread->title = $thread_info['title'];
+		}
+		if (array_key_exists('dateline', $thread_info)) {
+			$thread->createTime = Utils::epochTimeToDateTime($thread_info['dateline']);
+		}
+		if (array_key_exists('lastpost', $thread_info)) {
+			$thread->lastUpdateTime = Utils::epochTimeToDateTime(
+				$thread_info['lastpost']
+			);
+		}
+		if (array_key_exists('replycount', $thread_info)) {
+			$thread->numPosts = $thread_info['replycount'] + 1;
+		}
+		if (array_key_exists('views', $thread_info)) {
+			$thread->numViews = $thread_info['views'];
+		}
+		if (array_key_exists('pollid', $thread_info)) {
+			if ($thread_info['pollid'] > 0) {
+				$thread->poll = new Poll($thread_info['pollid']);
+			}
+		}
+		if (array_key_exists('iconid', $thread_info)) {
+			if ($thread_info['iconid'] > 0) {
+				$thread->icon = new Icon($thread_info['iconid']);
+			}
+		}
+		if	(
+				array_key_exists('votenum', $thread_info) &&
+				array_key_exists('votetotal', $thread_info)
+			)
+		{
+			if ($thread_info['votenum'] > 0) {
+				$thread->numStars = (
+					$thread_info['votetotal'] / 
+					$thread_info['votenum']
+				);
+			}
+		}
+		
+		// Get the user's permissions for the thread
+		$can_see_deleted_threads = Permissions::canSeeDeletedThreads($user, $thread->forum);
+		$can_see_deleted_posts = Permissions::canSeeDeletedPosts($user, $thread);
+		$can_see_hidden_posts = Permissions::canSeeHiddenPosts($user, $thread);
 
 		// Calculate the status of the thread
 		$thread_status = 0;
@@ -151,60 +201,19 @@ extends Action
 				$thread_status |= Thread::$STATUS_HAS_DELETED_POSTS;
 			}
 		}
-
-		// Create the thread and add some properties (if they're available).
-		$thread = new Thread($thread_id);
 		$thread->status = $thread_status;
-		if (array_key_exists('forumid', $thread_info)) {
-			$thread->forumId = $thread_info['forumid'];
-		}
-		if (array_key_exists('title', $thread_info)) {
-			$thread->title = $thread_info['title'];
-		}
-		if (array_key_exists('dateline', $thread_info)) {
-			$thread->createTime = Utils::epochTimeToDateTime($thread_info['dateline']);
-		}
-		if (array_key_exists('lastpost', $thread_info)) {
-			$thread->lastUpdateTime = Utils::epochTimeToDateTime($thread_info['lastpost']);
-		}
-		if (array_key_exists('replycount', $thread_info)) {
-			$thread->numPosts = $thread_info['replycount'] + 1;
-		}
-		if (array_key_exists('views', $thread_info)) {
-			$thread->numViews = $thread_info['views'];
-		}
-		if (array_key_exists('pollid', $thread_info)) {
-			if ($thread_info['pollid'] > 0) {
-				$thread->poll = new Poll($thread_info['pollid']);
-			}
-		}
-		if (array_key_exists('iconid', $thread_info)) {
-			if ($thread_info['iconid'] > 0) {
-				$thread->icon = new ThreadIcon($thread_info['iconid']);
-			}
-		}
-		if	(
-				array_key_exists('votenum', $thread_info) &&
-				array_key_exists('votetotal', $thread_info)
-			)
-		{
-			if ($thread_info['votenum'] > 0) {
-				$thread->numStars = (
-					$thread_info['votetotal'] / 
-					$thread_info['votenum']
-				);
-			}
-		}
 
 		// Find the requested posts.
-		$thread_posts = VBulletin::call('fetch_post_ids', $thread_id, $start, $count, $can_see_deleted_posts, $can_see_hidden_posts);
+		$thread_posts = VBulletin::fetchPostIDs($thread, $user, $start, $count);
 		if ($thread_posts) {
 			// Use the GetPostAction to fetch the post information
-			$getPostAction = Actions::getAction("getPost");
+			$get_post_action = Actions::getAction("getPost");
 
 			$posts = array();
 			foreach ($thread_posts as $thread_post) {
-				$posts[] = $getPostAction->execute(array("postId" => (int)$thread_post['id']));
+				$posts[] = $get_post_action->execute(
+					array("postId" => (int)$thread_post['id'])
+				);
 			}
 
 			$thread->posts = $posts;

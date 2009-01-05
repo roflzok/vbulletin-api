@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -34,6 +34,12 @@
 
 /** Configuration file. */
 require_once(dirname(dirname(__FILE__)) . "/config.php");
+/** Permissions. */
+require_once("Permissions.php");
+/** Category object. */
+require_once("data/Category.php");
+/** Forum object. */
+require_once("data/Forum.php");
 
 /** A facade for vBulletin so that other classes may call its functions.
  *
@@ -93,8 +99,16 @@ class VBulletin {
 
 		// Find the function and call it.
 		switch ($func_args[0]) {
-			case "fetch_post_ids":
-				return self::fetchPostIDs($func_args[1], $func_args[2], $func_args[3], $func_args[4], $func_args[5]);
+			case "construct_forum_bit":
+				if (!isset($func_args[2])) {
+					$func_args[2] = 0;
+				}
+				if (!isset($func_args[3])) {
+					$func_args[3] = 0;
+				}
+				return construct_forum_bit($func_args[1], $func_args[2], $func_args[3]);
+			case "fetch_foruminfo":
+				return fetch_foruminfo($func_args[1]);
 			case "fetch_postinfo":
 				return fetch_postinfo($func_args[1]);
 			case "fetch_threadinfo":
@@ -104,63 +118,232 @@ class VBulletin {
 		}
 	}
 
-	/** Pseudo-vBulletin function to get the post IDs associated with a given 
-	 *	thread.
+	/** Fetch any child forums or categories for a given {@link Site}, {@link 
+	 *	Category} or {@link Forum}.
 	 *
-	 *	@param	int	$thread_id	The ID of the thread to fetch the posts from.
-	 *	@return	array			An array of post IDs in chronological order, 
-	 *							oldest first.
+	 *	@param	int $id		The ID of the {@link Category} or {@link Forum}. To 
+	 *						find the children of the top level {@link Site}, 
+	 *						pass -1.
+	 *	@param	User $user	The {@link User} who is searching.
+	 *	@return	array		An array containing {@link Forum} or {@link
+	 *						Category} objects.
 	 */
-	private static function fetchPostIDs($thread_id, $start, $count, $can_see_deleted_posts, $can_see_hidden_posts) {
-		if (preg_match("/^\d+$/", $thread_id)) {
-			// Convenience alias
-			$db = $GLOBALS['vbulletin']->db;
+	public static function fetchChildForumsOrCategories($id, User $user) {
+		// Make sure the bridge is initialised.
+		self::init($GLOBALS['VBULLETIN_PATH']);
 
-			// Remove the posts that aren't allowed to be seen 
-			$filter = "";
-			if ((!$can_see_deleted_posts) && (!$can_see_hidden_posts)) {
-				$filter = " AND visible = 1";
-			} else if (!$can_see_deleted_posts) {
-				$filter = " AND visible < 2";
-			} else if (!$can_see_hidden_posts) {
-				$filter = " AND visible > 0";
-			}
-
-			// Fix the limit bounds
-			$start--;
-			if ($start < 0) {
-				$start = 0;
-			}
-			if ($count < 0) {
-				$count = PHP_INT_MAX;
-			}
-
-			// Read all the post numbers
-			$dbres = $db->query_read(
-				"SELECT postid, dateline" .
-				" FROM " . TABLE_PREFIX . "post" .
-				" WHERE threadid = " . $thread_id .
-				$filter .
-				" ORDER BY dateline" .
-				" LIMIT $start, $count"
-			);
-			$posts = array();
-			$post_count = 0;
-			while ($post = $db->fetch_array($dbres)) {
-				$posts[$post_count]['id'] = $post['postid'];
-				$posts[$post_count]['createTime'] = $post['dateline'];
-				$post_count++;
-			}
-			$db->free_result($dbres);
-
-			if (count($posts) > 0) {
-				return $posts;
-			} else {
-				throw Exception("No such thread");
-			}
-		} else {
-			throw Exception("Bad thread ID passed.");
+		// Pull in the vBulletin globals
+		foreach (self::$vbulletin_globals as $name => $value) {
+			$GLOBALS[$name] = $value;
 		}
+
+		// Check that the forum/category exists
+		if ($id !== -1) {
+			$parent_info = fetch_foruminfo($id);
+			if ($parent_info === FALSE) {
+				throw new Exception("No such forum or category: $id");
+			}
+		}
+
+		// Convenience alias
+		$db = $GLOBALS['vbulletin']->db;
+
+		// Query for the threads
+		$children = array();
+		$query =	'SELECT forumid,options,displayorder' .
+					' FROM forum' .
+					' WHERE parentid = ' . $id .
+					' AND displayorder != 0' .
+					' AND ((options & ' . Forum::$STATUS_ACTIVE . ') != 0)';
+		$dbres = $db->query_read($query);
+		while ($result = $db->fetch_array($dbres)) {
+			if ($result['options'] & Forum::$STATUS_IS_FORUM) {
+				$forum = new Forum($result['forumid']);
+				if (Permissions::canViewForum($user, $forum)) {
+					$children[] = $forum;
+				}
+			} else {
+				$category = new Category($result['forumid']);
+				if (Permissions::canViewCategory($user, $category)) {
+					$children[] = $category;
+				}
+			}
+		}
+		$db->free_result($dbres);
+
+		return $children;
+	}
+
+	/** Get the post IDs associated with a given thread.
+	 *
+	 *	@param	Thread $thread_id	The thread to fetch the posts from.
+	 *	@param	User $user			The user to fetch the posts for.
+	 *	@param	int $start			The starting post number to return.
+	 *	@param	int $count			The number of posts to return.
+	 *	@return	array				An array of post IDs in chronological 
+	 *								order, oldest first.
+	 */
+	public static function fetchPostIDs(Thread $thread, User $user, $start, $count) {
+		// Make sure the bridge is initialised.
+		self::init($GLOBALS['VBULLETIN_PATH']);
+
+		// Pull in the vBulletin globals
+		foreach (self::$vbulletin_globals as $name => $value) {
+			$GLOBALS[$name] = $value;
+		}
+
+		// Sanitise the parameters that will end up in the SQL
+		if (!(preg_match("/^-?\d+$/", $start))) {
+			throw new Exception("Bad start value passed.");
+		}
+		if (!(preg_match("/^-?\d+$/", $count))) {
+			throw new Exception("Bad count value passed.");
+		}
+
+		$can_see_deleted_posts = Permissions::canSeeDeletedPosts($user, $thread);
+		$can_see_hidden_posts = Permissions::canSeeHiddenPosts($user, $thread);
+
+		// Convenience alias
+		$db = $GLOBALS['vbulletin']->db;
+
+		// Remove the posts that aren't allowed to be seen 
+		$filter = "";
+		if ((!$can_see_deleted_posts) && (!$can_see_hidden_posts)) {
+			$filter = " AND visible = 1";
+		} else if (!$can_see_deleted_posts) {
+			$filter = " AND visible < 2";
+		} else if (!$can_see_hidden_posts) {
+			$filter = " AND visible > 0";
+		}
+
+		// Fix the limit bounds
+		$start--;
+		if ($start < 0) {
+			$start = 0;
+		}
+		if ($count < 0) {
+			$count = PHP_INT_MAX;
+		}
+
+		// Read all the post numbers
+		$dbres = $db->query_read(
+			"SELECT postid, dateline" .
+			" FROM " . TABLE_PREFIX . "post" .
+			" WHERE threadid = " . $thread->id .
+			$filter .
+			" ORDER BY dateline" .
+			" LIMIT $start, $count"
+		);
+		$posts = array();
+		$post_count = 0;
+		while ($post = $db->fetch_array($dbres)) {
+			$posts[$post_count]['id'] = $post['postid'];
+			$posts[$post_count]['createTime'] = $post['dateline'];
+			$post_count++;
+		}
+		$db->free_result($dbres);
+
+		if (count($posts) > 0) {
+			return $posts;
+		} else {
+			throw new Exception("No such thread");
+		}
+	}
+
+	/** Get the name of the site.
+	 *
+	 *	@return	The name of the site.
+	 */
+	public static function fetchSiteName() {
+		// Make sure the bridge is initialised.
+		self::init($GLOBALS['VBULLETIN_PATH']);
+
+		return self::$vbulletin_globals['vbulletin']->options['bbtitle'];
+	}
+
+	/** Get the threads associated with a given forum.
+	 *
+	 *	@param	Forum $forum	The ID of the forum to fetch the threads from.
+	 *	@param	User $user		The user to fetch the threads for.
+	 *	@param	int $start		The index (from 1) of the first thread to 
+	 *							return.
+	 *	@param	int $count								The number of threads 
+	 *													to return.
+	 *	@return	array
+	 *
+	 */
+	public static function fetchThreadIDs(Forum $forum, User $user, $start, $count) {
+		// Make sure the bridge is initialised.
+		self::init($GLOBALS['VBULLETIN_PATH']);
+
+		// Pull in the vBulletin globals
+		foreach (self::$vbulletin_globals as $name => $value) {
+			$GLOBALS[$name] = $value;
+		}
+
+		// Sanitise the parameters that will end up in the SQL
+		if (!(preg_match("/^-?\d+$/", $start))) {
+			throw new Exception("Bad start value passed.");
+		}
+		if (!(preg_match("/^-?\d+$/", $count))) {
+			throw new Exception("Bad count value passed.");
+		}
+
+		// Check that the forum exists
+		$forum_info = fetch_foruminfo($forum->id);
+		if ($forum_info === FALSE) {
+			throw new Exception("No such forum");
+		}
+
+		// Fix the limit bounds
+		$start--;
+		if ($start < 0) {
+			$start = 0;
+		}
+		if ($count < 0) {
+			$count = PHP_INT_MAX;
+		}
+
+		// Find the permissions
+		$can_see_deleted_threads = Permissions::canSeeDeletedThreads($user, $forum);
+		$can_see_hidden_threads = Permissions::canSeeHiddenThreads($user, $forum);
+		$can_see_other_posters_threads = Permissions::canSeeOtherPostersThreads($user, $forum);
+
+		// Remove the threads that aren't allowed to be seen 
+		$filter = "";
+		if ((!$can_see_deleted_threads) && (!$can_see_hidden_threads)) {
+			$filter = " AND visible = 1";
+		} else if (!$can_see_deleted_posts) {
+			$filter = " AND visible < 2";
+		} else if (!$can_see_hidden_posts) {
+			$filter = " AND visible > 0";
+		}
+		if (!($can_see_other_posters_threads)) {
+			if ($user !== NULL) {
+				$filter .= ' AND (postuserid = ' . $user->id . ')';
+			} else {
+				return array();
+			}
+		}
+
+		// Convenience alias
+		$db = $GLOBALS['vbulletin']->db;
+
+		// Query for the threads
+		$threads = array();
+		$query =	'SELECT threadid' .
+					' FROM thread' .
+					' WHERE forumid = ' . $forum->id .
+					$filter .
+					' ORDER BY sticky DESC, lastpost DESC' .
+					" LIMIT $start, $count";
+		$dbres = $db->query_read($query);
+		while ($thread = $db->fetch_array($dbres)) {
+			$threads[] = (int)$thread['threadid'];
+		}
+		$db->free_result($dbres);
+
+		return $threads;
 	}
 }
 ?>

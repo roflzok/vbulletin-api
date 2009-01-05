@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -37,14 +37,29 @@ require_once("DataObject.php");
 
 /** A query object for the search function.
  *
- *	@property	array $keywords Keywords to search for.
- *	@property	User $user		Restrict to this user.
- *	@property	DateTime $minDate	The earliest date/time to search for.
- *	@property	DateTime $maxDate	The latest date/time to search for.
- *	@property	int $minReplies The minimum number of replies that must be in
- *								the thread containing each returned post.
- *	@property	int $maxReplies The maximum number of replies that must be in
- *								the thread containing each returned post.
+ *	@property	array $keywords 			Keywords to search for.
+ *	@property	User $byUser				Restrict results to this user.
+ *	@property	DateTime $minDate			The earliest date/time to search
+ *											for.
+ *	@property	DateTime $maxDate			The latest date/time to search for.
+ *	@property	int $minReplies 			The minimum number of replies that
+ *											must be in the thread containing
+ *											each returned post.
+ *	@property	int $maxReplies 			The maximum number of replies that
+ *											must be in the thread containing
+ *											each returned post.
+ *	@property	string $tag 				Restrict results to posts with this
+ *											tag.
+ *	@property	array $forums				Restrict results to posts within
+ *											these forums.
+ *	@property	boolean $includeChildForums If results have been restricted
+ *											using the forums property, set this
+ *											to true to include children of
+ *											those forums in the search.
+ *	@property	User $user					The user who is making the search.
+ *	@property	boolean $resultsAsThreads	True if the results should be
+ *											returned as threads, false if they
+ *											should be returned as posts.
  *	@package	vBulletinAPI
  */
 class SearchQuery
@@ -52,20 +67,35 @@ extends DataObject
 {
 	/** Create a new {@link SearchQuery}.
 	 *
-	 *	@param	array $keywords Keywords to search for.
-	 *	@param	User $user		Restrict to this user.
-	 *	@param	DateTime $minDate	The earliest date/time to search for.
-	 *	@param	DateTime $maxDate	The latest date/time to search for.
-	 *	@param	int $minReplies The minimum number of replies that must be in
-	 *							the thread containing each returned post.
-	 *	@param	int $maxReplies The maximum number of replies that must be in
-	 *							the thread containing each returned post.
+	 *	@param	array $keywords 			Keywords to search for.
+	 *	@param	User $byUser				Restrict results to this user.
+	 *	@param	DateTime $minDate			The earliest date/time to search
+	 *										for.
+	 *	@param	DateTime $maxDate			The latest date/time to search for.
+	 *	@param	int $minReplies 			The minimum number of replies that
+	 *										must be in the thread containing
+	 *										each returned post.
+	 *	@param	int $maxReplies 			The maximum number of replies that
+	 *										must be in the thread containing
+	 *										each returned post.
+	 *	@param	string $tag 				Restrict results to posts with this
+	 *										tag.
+	 *	@param	array $forums				Restrict results to posts within
+	 *										these forums.
+	 *	@param	boolean $includeChildForums If results have been restricted
+	 *										using the forums property, set this
+	 *										to true to include children of
+	 *										those forums in the search.
+	 *	@param	User $user					The user who is making the search.
+	 *	@param	boolean $resultsAsThreads	True if the results should be
+	 *										returned as threads, false if they
+	 *										should be returned as posts.
 	 */
-	public function __construct($keywords = array(), User $user = NULL, DateTime $minDate = NULL, DateTime $maxDate = NULL, $minReplies = 0, $maxReplies = 4294967295) {
+	public function __construct($keywords = array(), User $byUser = NULL, DateTime $minDate = NULL, DateTime $maxDate = NULL, $minReplies = 0, $maxReplies = PHP_INT_MAX, $tag = "", $forums = array(), $includeChildForums = TRUE, User $user = new User(0), $resultsAsThreads = TRUE) {
 		$this->data['keywords'] = $keywords;
 		$this->type['keywords'] = "array";
-		$this->data['user'] = $user;
-		$this->type['user'] = "User";
+		$this->data['byUser'] = $byUser;
+		$this->type['byUser'] = "User";
 		$this->data['minDate'] = $minDate;
 		$this->type['minDate'] = "DateTime";
 		$this->data['maxDate'] = $maxDate;
@@ -74,6 +104,16 @@ extends DataObject
 		$this->type['minReplies'] = "int";
 		$this->data['maxReplies'] = $maxReplies;
 		$this->type['maxReplies'] = "int";
+		$this->data['tag'] = $tag;
+		$this->type['tag'] = "string";
+		$this->data['forums'] = $forums;
+		$this->type['forums'] = "array";
+		$this->data['includeChildForums'] = $includeChildForums;
+		$this->type['includeChildForums'] = "boolean";
+		$this->data['user'] = $user;
+		$this->type['user'] = "User";
+		$this->data['resultsAsThreads'] = $resultsAsThreads;
+		$this->type['resultsAsThreads'] = "boolean";
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -84,11 +124,16 @@ extends DataObject
 	protected function defaultPropertyValues() {
 		return array(
 			"keywords" => array(),
-			"user" => NULL,
+			"byUser" => NULL,
 			"minDate" => NULL,
 			"maxDate" => NULL,
 			"minReplies" => 0,
-			"maxReplies" => 4294967295,
+			"maxReplies" => PHP_INT_MAX,
+			"tag" => "",
+			"forums" => array(),
+			"includeChildForums" => TRUE,
+			"user" => new User(0),
+			"resultsAsThreads" => TRUE,
 		);
 	}
 }

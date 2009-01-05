@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -78,7 +78,7 @@ extends Encoder
 	 *									values are the values of those 
 	 *									parameters.
 	 */
-	public function decode($encoded_data) {
+	protected function decodeRequest($encoded_data) {
 		$xml_data = simplexml_load_string($encoded_data);
 
 		$action_name = $this->decodeString($xml_data->methodName[0]);
@@ -289,7 +289,7 @@ extends Encoder
 		} else if (is_object($value)) {
 			$this->encodeObject($xml, $value);
 		} else if (is_string($value)) {
-			$xml->addChild("string", $value);
+			$xml->addChild("string", htmlspecialchars($value));
 		} else {
 			throw new Exception("Unknown type for encoding: " . gettype($value));
 		}

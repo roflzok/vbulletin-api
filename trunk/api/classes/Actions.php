@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -60,7 +60,7 @@ class Actions {
 		$action_class_name = ucfirst($action_name) . "Action";
 		$action_class_file = dirname(__FILE__) . "/actions/$action_class_name.php";
 
-		if (@include($action_class_file)) {
+		if (@include_once($action_class_file)) {
 			try {
 				$action = new $action_class_name();
 				if ($action instanceof Action) {

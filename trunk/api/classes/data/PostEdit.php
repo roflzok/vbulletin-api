@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -51,7 +51,7 @@ extends DataObject
 	 *	@param	User $editor	The User who edited the post
 	 *	@param	string $reason	The reason given for editing the post
 	 */
-	public function __construct(DateTime $time, User $editor, $reason = "") {
+	public function __construct(DateTime $time = NULL, User $editor = NULL, $reason = "") {
 		$this->data['time'] = $time;
 		$this->type['time'] = "DateTime";
 		$this->data['editor'] = $editor;
@@ -67,6 +67,8 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
+			"time" => NULL,
+			"editor" => NULL,
 			"reason" => "",
 		);
 	}

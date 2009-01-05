@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -38,10 +38,16 @@ require_once("base/Action.php");
 require_once(dirname(dirname(__FILE__)) . "/Utils.php");
 /** Bridge to vBulletin. */
 require_once(dirname(dirname(__FILE__)) . "/VBulletin.php");
+/** Icon object. */
+require_once(dirname(dirname(__FILE__)) . "/data/Icon.php");
+/** Infraction object. */
+require_once(dirname(dirname(__FILE__)) . "/data/Infraction.php");
 /** Post object. */
 require_once(dirname(dirname(__FILE__)) . "/data/Post.php");
 /** PostEdit object. */
 require_once(dirname(dirname(__FILE__)) . "/data/PostEdit.php");
+/** Thread object. */
+require_once(dirname(dirname(__FILE__)) . "/data/Thread.php");
 /** User object. */
 require_once(dirname(dirname(__FILE__)) . "/data/User.php");
 
@@ -62,6 +68,10 @@ extends Action
 			"postId" => array(
 				"description" => "The ID of the post to get",
 				"validationFunction" => "is_integer"
+			),
+			"user" => array(
+				"description" => "The user making the request",
+				"defaultValue" => new User(0)
 			)
 		);
 	}
@@ -97,19 +107,71 @@ extends Action
 	 */
 	protected function doIt($arguments) {
 		$post_id = $arguments['postId'];
-
-		// FIXME:
-		$can_see_deleted_posts = FALSE;
-		$can_see_hidden_posts = FALSE;
-		$can_see_infractions = FALSE;
-		$can_see_ip_addresses = FALSE;
-		$can_see_report_threads = FALSE;
+		$user = $arguments['user'];
 
 		// Get the post info
 		$post_info = VBulletin::call("fetch_postinfo", $post_id);
 		if ($post_info == NULL) {
 			throw new Exception("Post does not exist");
 		}
+
+		// Construct the post
+		$post = new Post($post_id);
+		if (array_key_exists('threadid', $post_info)) {
+			$post->thread = new Thread($post_info['threadid']);
+			$get_parent_action = Actions::getAction('getParent');
+			$post->thread->forum = $get_parent_action->execute(array("object" => $post->thread));
+		}
+		if	(
+				array_key_exists('userid', $post_info) &&
+				array_key_exists('username', $post_info)
+			) 
+		{
+			$post->author = new User(
+				$post_info['userid'], $post_info['username']
+			);
+		}
+		if (array_key_exists('dateline', $post_info)) {
+			$post->createTime = Utils::epochTimeToDateTime(
+				$post_info['dateline']
+			);
+		}
+		if (array_key_exists('pagetext', $post_info)) {
+			$post->text = $post_info['pagetext'];
+		}
+		if (array_key_exists('title', $post_info)) {
+			if ($post_info['title']) {
+				$post->title = $post_info['title'];
+			}
+		}
+		if	(
+				array_key_exists('edit_dateline', $post_info) &&
+				array_key_exists('edit_userid', $post_info)
+			) 
+		{
+			if ($post_info['edit_dateline'] != NULL) {
+				$edit = new PostEdit(
+					Utils::epochTimeToDateTime($post_info['edit_dateline']),
+					new User($post_info['edit_userid'])
+				);
+				if (array_key_exists('edit_reason', $post_info)) {
+					$edit->reason = $post_info['edit_reason'];
+				}
+				$post->edited = $edit;
+			}
+		}
+		if (array_key_exists('iconid', $post_info)) {
+			if ($post_info['iconid'] > 0) {
+				$post->icon = new Icon($post_info['iconid']);
+			}
+		}
+		
+		// Find out the permissions
+		$can_see_deleted_posts = Permissions::canSeeDeletedPosts($user, $post->thread);
+		$can_see_hidden_posts = Permissions::canSeeHiddenPosts($user, $post->thread);
+		$can_see_infractions = Permissions::canSeeInfractions($user, $post->thread->forum);
+		$can_see_ip_addresses = Permissions::canSeeIpAddresses($user, $post->thread->forum);
+		$can_see_report_threads = Permissions::canSeeReportThreads($user, $post->thread->forum);
 
 		// Work out the status of the post
 		$status = 0;
@@ -136,56 +198,9 @@ extends Action
 				$status |= Post::$STATUS_HAS_ATTACHMENT;
 			}
 		}
-
-		// Construct the post
-		$post = new Post($post_id);
-		if (array_key_exists('threadid', $post_info)) {
-			$post->threadId = $post_info['threadid'];
-		}
-		if	(
-				array_key_exists('userid', $post_info) &&
-				array_key_exists('username', $post_info)
-			) 
-		{
-			$post->author = new User(
-				$post_info['userid'], $post_info['username']
-			);
-		}
-		if (array_key_exists('dateline', $post_info)) {
-			$post->createTime = Utils::epochTimeToDateTime(
-				$post_info['dateline']
-			);
-		}
-		if (array_key_exists('pagetext', $post_info)) {
-			$post->text = $post_info['pagetext'];
-		}
-		if (array_key_exists('title', $post_info)) {
-			if ($post_info['title']) {
-				$post->title = $post_info['title'];
-			}
-		}
 		$post->status = $status;
-		if	(
-				array_key_exists('edit_dateline', $post_info) &&
-				array_key_exists('edit_userid', $post_info)
-			) 
-		{
-			if ($post_info['edit_dateline'] != NULL) {
-				$edit = new PostEdit(
-					Utils::epochTimeToDateTime($post_info['edit_dateline']),
-					new User($post_info['edit_userid'])
-				);
-				if (array_key_exists('edit_reason', $post_info)) {
-					$edit->reason = $post_info['edit_reason'];
-				}
-				$post->edited = $edit;
-			}
-		}
-		if (array_key_exists('iconid', $post_info)) {
-			if ($post_info['iconid'] > 0) {
-				$post->icon = new Icon($post_info['iconid']);
-			}
-		}
+		
+		// Moderator bits
 		if ($can_see_infractions) {
 			if (array_key_exists('infraction', $post_info)) {
 				if ($post_info['infraction']) {

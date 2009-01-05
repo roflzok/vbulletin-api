@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -31,6 +31,7 @@
  * @filesource
  * @package vBulletinAPI
  */
+require_once(dirname(dirname(dirname(__FILE__))) . "/data/DataObject.php");
 
 /** The interface to which all encoder/decoders must conform to.
  *
@@ -70,7 +71,83 @@ abstract class Encoder {
 	 *									values are the values of those 
 	 *									parameters.
 	 */
-	public abstract function decode($encoded_data);
+	public final function decode($encoded_data) {
+		$return_value = $this->decodeRequest($encoded_data);
+		$return_value['params'] = self::decodeObjects($return_value['params']);
+		return $return_value;
+	}
+
+	/** The method to override to actually implement the decoding.
+	 *
+	 *	@param	string $encoded_data	A string which is an encoded 
+	 *									representation of the raw message.
+	 *	@return	array					An associative array with two keys,
+	 *									"action" and "params". The value 
+	 *									associated with "action" is a string 
+	 *									and is the name of the action to 
+	 *									execute. The value associated with 
+	 *									"params" is an associative array where 
+	 *									the keys are the names of the 
+	 *									parameters to the action and their 
+	 *									values are the values of those 
+	 *									parameters.
+	 */
+	protected abstract function decodeRequest($encoded_data);
+
+	/** Decode any objects found in a structure. The objects must be instances 
+	 *	of classes which are subclasses of DataObject.
+	 *
+	 *	@param	mixed $structure	A PHP structure to be recursively 
+	 *								processed.
+	 *	@return	mixed				The input with the objects converted from 
+	 *								array form into object form.
+	 */
+	private static function decodeObjects($structure) {
+		if (is_array($structure)) {
+			// Recurse down through all the items in the structure and 
+			// decode them first.
+			foreach ($structure as $key => $value) {
+				$structure[$key] = self::decodeObjects($value);
+			}
+
+			// Now convert this to a class if appropriate
+			if (array_key_exists('__class', $structure)) {
+				// Get the special parameters
+				$class_name = $structure['__class'];
+				unset($structure['__class']);
+
+				// Include the class
+				DataObject::includeClass($class_name);
+				
+				// Find the required constructor parameters and make sure 
+				// they're present
+				$constructor_params = eval("return $class_name::requiredConstructorParams();");
+
+				// Stringify the parameters which will be in the constructor
+				$params = array();
+				foreach ($constructor_params as $name) {
+					if (!array_key_exists($name, $structure)) {
+						throw new Exception("Property '$name' is required to construct objects of type '$class_name'");
+					}
+
+					$params[] = var_export($structure[$name], TRUE);
+					unset($structure[$name]);
+				}
+
+				// Create the object
+				$obj = eval("return new $class_name(" . join(", ", $params) . ");");
+				
+				// Set all the other properties of the object
+				foreach ($structure as $key => $value) {
+					$obj->$key = $value;
+				}
+				
+				// Replace the structure with the new object.
+				$structure = $obj;
+			}
+		}
+		return $structure;
+	}
 
 	/** If the encoder wishes to handle a request itself rather than passing it 
 	 * on to an action then it can elect to handle it here. An regular {@link 
