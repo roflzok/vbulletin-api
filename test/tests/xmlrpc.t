@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # vim:ft=perl
 #
-# Copyright (c) 2008, Conor McDermottroe
+# Copyright (c) 2008, 2009 Conor McDermottroe
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without 
@@ -31,12 +31,37 @@
 use strict;
 use warnings;
 
+use Data::Dumper;
 use RPC::XML;
 use RPC::XML::Client;
 use Test::More;
 
+# Configure Data::Dumper
+$Data::Dumper::Indent = 0;
+$Data::Dumper::Terse = 1;
+
 # Some data describing the methods to test
 my %METHODS = (
+	"getForum" => {
+		"signature" => ["struct", "struct"],
+		"good" => [
+			{"forumId" => 2},			
+			{"forumId" => 3},			
+		],
+		"bad" => [
+			{},
+			{"forumId" => 1},			
+			{"forumId" => "green"},			
+		],
+	},
+	"getParent" => {
+		"signature" => ["struct", "struct"],
+		"good" => [
+		],
+		"bad" => [
+			{},
+		],
+	},
 	"getPost" => {
 		"signature" => ["struct", "struct"],
 		"good" => [
@@ -45,6 +70,15 @@ my %METHODS = (
 		],
 		"bad" => [
 			{},
+			{"postId" => "green"},
+		],
+	},
+	"getSite" => {
+		"signature" => ["struct", "struct"],
+		"good" => [
+			{},			
+		],
+		"bad" => [
 			{"postId" => "green"},
 		],
 	},
@@ -58,6 +92,28 @@ my %METHODS = (
 			{},
 			{"threadId" => "green"},
 		],
+	},
+	"isCategory" => {
+		"signature" => ["boolean", "struct"],
+		"good" => [
+			{"categoryId" => 1},			
+		],
+		"bad" => [
+			{},
+		],
+	},
+	"isForum" => {
+		"signature" => ["boolean", "struct"],
+		"good" => [
+			{"forumId" => 2},			
+			{"forumId" => 3},			
+		],
+		"bad" => [
+			{},
+		],
+	},
+	"login" => {
+		"signature" => ["struct", "struct"],
 	},
 	"system.listMethods" => {
 		"signature" => ["array"],
@@ -127,7 +183,7 @@ isa_ok($xml_rpc_client, "RPC::XML::Client", "new RPC::XML::Client()");
 			fail("system.methodHelp()");
 		} else {
 			$response = $response->value;
-			is_deeply($response->[0], $METHODS{$method}{'signature'}, "system.methodHelp()");
+			is_deeply($response->[0], $METHODS{$method}{'signature'}, "system.methodSignature(\"$method\")");
 		}
 	}
 }
@@ -137,11 +193,21 @@ isa_ok($xml_rpc_client, "RPC::XML::Client", "new RPC::XML::Client()");
 	foreach my $method (sort keys %METHODS) {
 		foreach my $test_data (@{$METHODS{$method}{"good"}}) {
 			my $response = $xml_rpc_client->send_request($method, $test_data);
-			isa_ok($response, "RPC::XML::struct", $method);
+			my $test_name = "$method(" . Data::Dumper->Dump([$test_data], ["*test_data"]) . ")";
+			if (ref($response) && $response->isa("RPC::XML::datatype")) {
+				if ($response->is_fault()) {
+					use Data::Dumper;
+					print Data::Dumper->Dump([\$response], ["*response"]);
+				}
+				is($response->is_fault(), 0, $test_name);
+			} else {
+				fail("$test_name returned \"$response\" which is not a reference");
+			}
 		}
 		foreach my $test_data (@{$METHODS{$method}{"bad"}}) {
 			my $response = $xml_rpc_client->send_request($method, $test_data);
-			isa_ok($response, "RPC::XML::fault", $method);
+			my $test_name = "$method(" . Data::Dumper->Dump([$test_data], ["*test_data"]) . ")";
+			isa_ok($response, "RPC::XML::fault", $test_name);
 		}
 	}
 }

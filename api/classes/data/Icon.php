@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -64,6 +64,18 @@ extends DataObject
 	protected function defaultPropertyValues() {
 		return array(
 			"url" => "",
+		);
+	}
+	
+	/** Get the names of the required constructor parameters in the order in
+	 *	which they must appear in the constructor.
+	 *
+	 *	@return	array	An array containing the names of the properties which
+	 *					must appear in order in the constructor parameters.
+	 */
+	public static function requiredConstructorParams() {
+		return array(
+			"id",
 		);
 	}
 }

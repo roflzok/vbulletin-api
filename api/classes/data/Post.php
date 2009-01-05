@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -38,8 +38,7 @@ require_once("DataObject.php");
 /** Represent a post in a vBulletin system.
  *
  *	@property	int $id 			The ID of the post within vBulletin.
- *	@property	int $threadId			The ID of the thread within vBulletin
- *										in which this post resides.
+ *	@property	Thread $thread			The thread in which this post resides.
  *	@property	User $author			The author of the post.
  *	@property	DateTime $createTime	The time and date that the post was
  *										created.
@@ -69,8 +68,7 @@ extends DataObject
 	/** Create a new {@link Post}.
 	 *
 	 *	@param	int $id 			The ID of the post within vBulletin.
-	 *	@param	int $threadId			The ID of the thread within vBulletin
-	 *									in which this post resides.
+	 *	@param	Thread $thread			The thread in which this post resides.
 	 *	@param	User $author			The author of the post.
 	 *	@param	DateTime $createTime	The time and date that the post was
 	 *									created.
@@ -84,11 +82,11 @@ extends DataObject
 	 *									reported.
 	 *	@param	string $ip				The IP address the post was made from.
 	 */
-	public function __construct($id, $threadId = 0, User $author = NULL, DateTime $createTime = NULL, $text = "", $title = "", $status = 0, PostEdit $edited = NULL, Icon $icon = NULL, Infraction $infraction = NULL, Thread $reportThread = NULL, $ip = "") {
+	public function __construct($id, Thread $thread = NULL, User $author = NULL, DateTime $createTime = NULL, $text = "", $title = "", $status = 0, PostEdit $edited = NULL, Icon $icon = NULL, Infraction $infraction = NULL, Thread $reportThread = NULL, $ip = "") {
 		$this->data['id'] = $id;
 		$this->type['id'] = "int";
-		$this->data['threadId'] = $threadId;
-		$this->type['threadId'] = "int";
+		$this->data['thread'] = $thread;
+		$this->type['thread'] = "Thread";
 		$this->data['author'] = $author;
 		$this->type['author'] = "User";
 		$this->data['createTime'] = $createTime;
@@ -118,7 +116,7 @@ extends DataObject
 	 */
 	protected function defaultPropertyValues() {
 		return array(
-			"threadId" => 0,
+			"thread" => NULL,
 			"author" => NULL,
 			"createTime" => NULL,
 			"text" => "",
@@ -129,6 +127,18 @@ extends DataObject
 			"infraction" => NULL,
 			"reportThread" => NULL,
 			"ip" => "",
+		);
+	}
+	
+	/** Get the names of the required constructor parameters in the order in
+	 *	which they must appear in the constructor.
+	 *
+	 *	@return	array	An array containing the names of the properties which
+	 *					must appear in order in the constructor parameters.
+	 */
+	public static function requiredConstructorParams() {
+		return array(
+			"id",
 		);
 	}
 }

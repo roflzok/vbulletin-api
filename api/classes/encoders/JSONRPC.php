@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -87,7 +87,7 @@ extends Encoder
 	 *									values are the values of those 
 	 *									parameters.
 	 */
-	public function decode($encoded_data) {
+	protected function decodeRequest($encoded_data) {
 		$decoded_data = json_decode($encoded_data, TRUE);
 		if ($decoded_data === NULL) {
 			throw new Exception("Malformed JSON in input");

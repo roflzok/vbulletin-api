@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # __BEGIN_COPYRIGHT__
-# Copyright (c) 2008, Conor McDermottroe
+# Copyright (c) 2008, 2009 Conor McDermottroe
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without 
@@ -80,10 +80,28 @@ my %DATA_CLASSES = (
 				"default" => "\"\"",
 			},
 			{
+				"name" => "description",
+				"type" => "string",
+				"description" => "The description of what the forum is for.",
+				"default" => "\"\"",
+			},
+			{
 				"name" => "parent",
 				"type" => "mixed",
 				"description" => "The parent object for this forum. It could be either a {\@link Site}, a {\@link Category} or a {\@link Forum}.",
 				"default" => "NULL",
+			},
+			{
+				"name" => "status",
+				"type" => "int",
+				"description" => "A bitmask describing many properties of the forum. See the STATUS_ constants for all the status bits that may be set.",
+				"default" => "0",
+			},
+			{
+				"name" => "privacy",
+				"type" => "int",
+				"description" => "Whether the forum is private or not and if so, whether or not the posts count towards a post count.",
+				"default" => "0",
 			},
 			{
 				"name" => "threads",
@@ -96,6 +114,136 @@ my %DATA_CLASSES = (
 				"type" => "array",
 				"description" => "An array of {\@link Forum}s which are children of this forum.",
 				"default" => "array()",
+			},
+			{
+				"name" => "link",
+				"type" => "string",
+				"description" => "If the forum is simply a link through to somewhere else, this is the URL.",
+				"default" => "\"\"",
+			},
+			{
+				"name" => "password",
+				"type" => "string",
+				"description" => "The password for the forum, if any.",
+				"default" => "NULL",
+			},
+			{
+				"name" => "daysToDisplay",
+				"type" => "int",
+				"description" => "The number of days worth of posts to display.",
+				"default" => "-1",
+			},
+		],
+		"CONSTANTS" => [
+			{
+				"name" => "STATUS_ACTIVE",
+				"value" => "1",
+				"description" => "The forum is active.",
+			},
+			{
+				"name" => "STATUS_ALLOW_POSTING",
+				"value" => "2",
+				"description" => "The forum allows new posts to be made.",
+			},
+			{
+				"name" => "STATUS_IS_FORUM",
+				"value" => "4",
+				"description" => "The forum is a forum and not a category.",
+			},
+			{
+				"name" => "STATUS_NEW_POSTS_MUST_BE_MODERATED",
+				"value" => "8",
+				"description" => "New posts in the forum must be moderated.",
+			},
+			{
+				"name" => "STATUS_NEW_THREADS_MUST_BE_MODERATED",
+				"value" => "16",
+				"description" => "New threads in the forum must be moderated.",
+			},
+			{
+				"name" => "STATUS_ATTACHMENTS_MUST_BE_MODERATED",
+				"value" => "32",
+				"description" => "Attachments must be approved before becoming visible.",
+			},
+			{
+				"name" => "STATUS_ALLOW_BBCODE",
+				"value" => "64",
+				"description" => "BBCode is allowed in posts in this forum.",
+			},
+			{
+				"name" => "STATUS_ALLOW_IMAGES",
+				"value" => "128",
+				"description" => "Images are allowed in posts in this forum.",
+			},
+			{
+				"name" => "STATUS_ALLOW_HTML",
+				"value" => "256",
+				"description" => "HTML is allowed in posts in this forum.",
+			},
+			{
+				"name" => "STATUS_ALLOW_SMILIES",
+				"value" => "512",
+				"description" => "Smilies are allowed in posts in this forum.",
+			},
+			{
+				"name" => "STATUS_ALLOW_ICONS",
+				"value" => "1024",
+				"description" => "Thread/post icons are allowed in this forum.",
+			},
+			{
+				"name" => "STATUS_ALLOW_RATINGS",
+				"value" => "2048",
+				"description" => "Threads in this forum may be rated.",
+			},
+			{
+				"name" => "STATUS_POSTS_COUNT",
+				"value" => "4096",
+				"description" => "Posts in this forum count towards post counts.",
+			},
+			{
+				"name" => "STATUS_CAN_HAVE_PASSWORD",
+				"value" => "8192",
+				"description" => "The forum can have a password.",
+			},
+			{
+				"name" => "STATUS_INDEX_POSTS",
+				"value" => "16384",
+				"description" => "Index these posts for search.",
+			},
+			{
+				"name" => "STATUS_STYLE_OVERRIDE",
+				"value" => "32768",
+				"description" => "Style is forced by admin, not selected by user.",
+			},
+			{
+				"name" => "STATUS_SHOW_ON_FORUM_JUMP",
+				"value" => "65536",
+				"description" => "This forum is shown on the forum jump mennu.",
+			},
+			{
+				"name" => "STATUS_PREFIX_REQUIRED",
+				"value" => "131072",
+				"description" => "Threads in this forum must have a prefix.",
+			},
+			{
+				"name" => "PRIVACY_DEFAULT",
+				"value" => "0",
+				"description" => "The privacy of the forum is the default value.",
+			},
+			{
+				"name" => "PRIVACY_PRIVATE",
+				"value" => "1",
+				"description" => "The forum is private.",
+			},
+			{
+				"name" => "PRIVACY_PUBLIC_HIDE_POST_COUNTS",
+				"value" => "2",
+				"description" => "The forum is public but the post counts are hidden.",
+			},
+			{
+				"name" => "PRIVACY_PUBLIC_SHOW_POST_COUNTS",
+				"value" => "3",
+				"description" => "The forum is public and the post counts are shown.",
 			},
 		],
 	},
@@ -144,10 +292,10 @@ my %DATA_CLASSES = (
 				"description" => "The ID of the post within vBulletin.",
 			},
 			{
-				"name" => "threadId",
-				"type" => "int",
-				"description" => "The ID of the thread within vBulletin in which this post resides.",
-				"default" => "0",
+				"name" => "thread",
+				"type" => "Thread",
+				"description" => "The thread in which this post resides.",
+				"default" => "NULL",
 			},
 			{
 				"name" => "author",
@@ -235,11 +383,13 @@ my %DATA_CLASSES = (
 				"name" => "time",
 				"type" => "DateTime",
 				"description" => "The time at which the edit occurred",
+				"default" => "NULL",
 			},
 			{
 				"name" => "editor",
 				"type" => "User",
 				"description" => "The User who edited the post",
+				"default" => "NULL",
 			},
 			{
 				"name" => "reason",
@@ -259,9 +409,9 @@ my %DATA_CLASSES = (
 				"default" => "array()",
 			},
 			{
-				"name" => "user",
+				"name" => "byUser",
 				"type" => "User",
-				"description" => "Restrict to this user.",
+				"description" => "Restrict results to this user.",
 				"default" => "NULL",
 			},
 			{
@@ -286,7 +436,37 @@ my %DATA_CLASSES = (
 				"name" => "maxReplies",
 				"type" => "int",
 				"description" => "The maximum number of replies that must be in the thread containing each returned post.",
-				"default" => "4294967295",
+				"default" => "PHP_INT_MAX",
+			},
+			{
+				"name" => "tag",
+				"type" => "string",
+				"description" => "Restrict results to posts with this tag.",
+				"default" => "\"\"",
+			},
+			{
+				"name" => "forums",
+				"type" => "array",
+				"description" => "Restrict results to posts within these forums.",
+				"default" => "array()",
+			},
+			{
+				"name" => "includeChildForums",
+				"type" => "boolean",
+				"description" => "If results have been restricted using the forums property, set this to true to include children of those forums in the search.",
+				"default" => "TRUE",
+			},
+			{
+				"name" => "user",
+				"type" => "User",
+				"description" => "The user who is making the search.",
+				"default" => "new User(0)",
+			},
+			{
+				"name" => "resultsAsThreads",
+				"type" => "boolean",
+				"description" => "True if the results should be returned as threads, false if they should be returned as posts.",
+				"default" => "TRUE",
 			},
 		],
 	},
@@ -299,9 +479,9 @@ my %DATA_CLASSES = (
 				"description" => "The name of the site.",
 			},
 			{
-				"name" => "categories",
+				"name" => "children",
 				"type" => "array",
-				"description" => "An array of the {\@link Category}s that make up the vBulletin instance.",
+				"description" => "An array of the top level {\@link Category}s or {\@link Forum}s that make up the vBulletin instance.",
 			},
 		],
 	},
@@ -314,10 +494,10 @@ my %DATA_CLASSES = (
 				"description" => "The ID of the thread within vBulletin.",
 			},
 			{
-				"name" => "forumId",
-				"type" => "int",
-				"description" => "The ID of the forum the thread is in.",
-				"default" => "-1",
+				"name" => "forum",
+				"type" => "Forum",
+				"description" => "The forum the thread is in.",
+				"default" => "NULL",
 			},
 			{
 				"name" => "title",
@@ -485,6 +665,7 @@ foreach my $class_name (keys %DATA_CLASSES) {
 	my @params;
 	my @constructor_body;
 	my @defaults;
+	my @required_constructor_params;
 	foreach (@{$DATA_CLASSES{$class_name}{"PROPERTIES"}}) {
 		my %prop = %{$_};
 
@@ -500,6 +681,11 @@ foreach my $class_name (keys %DATA_CLASSES) {
 		if (defined($prop{"default"})) {
 			push @defaults, [$prop{"name"}, $prop{"default"}];
 			$param .= " = $prop{default}";
+		} else {
+			if ($prop{"type"} =~ /^[A-Z]/o) {
+				die "Parameters of type $prop{type} may not be required parameters. [$class_name->$prop{name}]";
+			}
+			push @required_constructor_params, $prop{"name"};
 		}
 		push @params, $param;
 		
@@ -558,12 +744,35 @@ METHODHEAD
 METHODTAIL
 	}
 
+	my $required_constructor_params_method = "";
+	if (@required_constructor_params) {
+		$required_constructor_params_method .= <<'CONSTRUCTORPARAMSMETHODHEAD';
+	
+	/** Get the names of the required constructor parameters in the order in
+	 *	which they must appear in the constructor.
+	 *
+	 *	@return	array	An array containing the names of the properties which
+	 *					must appear in order in the constructor parameters.
+	 */
+	public static function requiredConstructorParams() {
+		return array(
+CONSTRUCTORPARAMSMETHODHEAD
+		foreach (@required_constructor_params) {
+			$required_constructor_params_method .= "\t\t\t\"$_\",\n";
+		}
+		$required_constructor_params_method .= <<'CONSTRUCTORPARAMSMETHODTAIL';
+		);
+	}
+CONSTRUCTORPARAMSMETHODTAIL
+	}
+
 	$DATA_CLASSES{$class_name}{"PROPERTY_DESCRIPTIONS"} = join("\n", @property_descriptions);
 	$DATA_CLASSES{$class_name}{"CONSTRUCTOR_PARAM_DESCRIPTIONS"} = join("\n", @param_descriptions);
 	$DATA_CLASSES{$class_name}{"CONSTRUCTOR_PARAMS"} = join(", ", @params);
 	$DATA_CLASSES{$class_name}{"CONSTRUCTOR_BODY"} = join("\n", @constructor_body);
 	$DATA_CLASSES{$class_name}{"CLASS_CONSTANTS"} = $class_constants;
 	$DATA_CLASSES{$class_name}{"DEFAULT_PROPERTY_VALUES_METHOD"} = $defaults;
+	$DATA_CLASSES{$class_name}{"REQUIRED_CONSTRUCTOR_PARAMS_METHOD"} = $required_constructor_params_method;
 
 	write_file($class_name, $DATA_CLASSES{$class_name}, \@template);
 }
@@ -612,5 +821,5 @@ ${CONSTRUCTOR_PARAM_DESCRIPTIONS}
 	public function __construct(${CONSTRUCTOR_PARAMS}) {
 ${CONSTRUCTOR_BODY}
 	}
-${DEFAULT_PROPERTY_VALUES_METHOD}}
+${DEFAULT_PROPERTY_VALUES_METHOD}${REQUIRED_CONSTRUCTOR_PARAMS_METHOD}}
 ?>

@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -37,9 +37,10 @@ require_once("DataObject.php");
 
 /** Represent the top-level of a vBulletin installation.
  *
- *	@property	string $name		The name of the site.
- *	@property	array $categories	An array of the {@link Category}s that make
- *									up the vBulletin instance.
+ *	@property	string $name	The name of the site.
+ *	@property	array $children An array of the top level {@link Category}s or
+ *								{@link Forum}s that make up the vBulletin
+ *								instance.
  *	@package	vBulletinAPI
  */
 class Site
@@ -47,15 +48,29 @@ extends DataObject
 {
 	/** Create a new {@link Site}.
 	 *
-	 *	@param	string $name		The name of the site.
-	 *	@param	array $categories	An array of the {@link Category}s that make
-	 *								up the vBulletin instance.
+	 *	@param	string $name	The name of the site.
+	 *	@param	array $children An array of the top level {@link Category}s or
+	 *							{@link Forum}s that make up the vBulletin
+	 *							instance.
 	 */
-	public function __construct($name, $categories) {
+	public function __construct($name, $children) {
 		$this->data['name'] = $name;
 		$this->type['name'] = "string";
-		$this->data['categories'] = $categories;
-		$this->type['categories'] = "array";
+		$this->data['children'] = $children;
+		$this->type['children'] = "array";
+	}
+	
+	/** Get the names of the required constructor parameters in the order in
+	 *	which they must appear in the constructor.
+	 *
+	 *	@return	array	An array containing the names of the properties which
+	 *					must appear in order in the constructor parameters.
+	 */
+	public static function requiredConstructorParams() {
+		return array(
+			"name",
+			"children",
+		);
 	}
 }
 ?>

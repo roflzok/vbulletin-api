@@ -1,6 +1,6 @@
 <?php
 /*
- * Copyright (c) 2008, Conor McDermottroe
+ * Copyright (c) 2008, 2009 Conor McDermottroe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -64,7 +64,7 @@ abstract class DataObject {
 	public function __set($name, $value) {
 		if (array_key_exists($name, $this->data)) {
 			$this->data[$name] = $value;
-			if (preg_match("/^[a-z]/", $this->type[$name])) {
+			if (preg_match("/^[a-z]/", $this->type[$name]) && $this->type[$name] !== "mixed") {
 				if (!settype($this->data[$name], $this->type[$name])) {
 					throw new Exception("Can't coerce {$this->data[$name]} into a {$this->type[$name]}");
 				}
@@ -91,10 +91,29 @@ abstract class DataObject {
 	 */
 	public function __unset($name) {
 		if (array_key_exists($name, $this->data)) {
-			$this->data[$name] = NULL;
-			return;
+			$default_values = $this->defaultPropertyValues();
+			if (array_key_exists($name, $default_values)) {
+				$this->data[$name] = $default_values[$name];
+			} else {
+				$this->data[$name] = NULL;
+			}
+		} else {
+			throw new Exception("No such property: $name");
 		}
-		throw new Exception("No such property: $name");
+	}
+
+	/**	Magic method, see PHPs documentation for this.
+	 *
+	 *	@return	string	A string form of this object.
+	 */
+	public function __toString() {
+		$exported_form = $this->export();
+		$class_name = $exported_form['__class'];
+		unset($exported_form['__class']);
+		foreach ($exported_form as $key => $value) {
+			$exported_form[$key] = "$value";
+		}
+		return preg_replace("/^Array/", "$class_name Object", print_r($exported_form, TRUE));
 	}
 
 	/** Default values for the properties. These will be used to minimise the 
@@ -128,6 +147,7 @@ abstract class DataObject {
 				$data_to_export[$key] = $value;
 			}
 		}
+		$data_to_export['__class'] = get_class($this);
 		return self::exportArray($data_to_export);
 	}
 
@@ -156,6 +176,21 @@ abstract class DataObject {
 		ksort($ret_val);
 		reset($ret_val);
 		return $ret_val;
+	}
+
+	/** Include a {@link DataObject} class.
+	 *
+	 *	@param	string $class_name	The name of the class to include.
+	 */
+	public static function includeClass($class_name) {
+		$class_file = dirname(__FILE__) . "/$class_name.php";
+		if (file_exists($class_file)) {
+			if (!require_once($class_file)) {
+				throw new Exception("No such class '$class_file'");
+			}
+		} else {
+			throw new Exception("No such class '$class_file'");
+		}
 	}
 }
 
