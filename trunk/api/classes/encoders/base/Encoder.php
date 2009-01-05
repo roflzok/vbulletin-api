@@ -31,6 +31,8 @@
  * @filesource
  * @package vBulletinAPI
  */
+
+/** DataObject class. */
 require_once(dirname(dirname(dirname(__FILE__))) . "/data/DataObject.php");
 
 /** The interface to which all encoder/decoders must conform to.
