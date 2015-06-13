@@ -1,0 +1,1 @@
+This vBulletin extension creates an API for vBulletin allowing it to be manipulated via XML-RPC or JSON-RPC.
